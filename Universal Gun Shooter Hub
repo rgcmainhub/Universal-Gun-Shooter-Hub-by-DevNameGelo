@@ -922,110 +922,177 @@ LGui.IgnoreGuiInset = true
 LGui.DisplayOrder = 9999
 LGui.Parent = Player.PlayerGui
 
+-- Deep dark space background
 local LBG = Instance.new("Frame")
 LBG.Size = UDim2.new(1,0,1,0)
-LBG.BackgroundColor3 = Color3.fromRGB(4,4,10)
+LBG.BackgroundColor3 = Color3.fromRGB(2,2,8)
 LBG.BorderSizePixel = 0
 LBG.ZIndex = 9999
 LBG.Parent = LGui
 
-do
-    local g = Instance.new("UIGradient")
-    g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(8,4,16)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(2,2,8)),
-    })
-    g.Rotation = 135
-    g.Parent = LBG
-end
+-- Radial dark center gradient overlay
+local LBGGrad = Instance.new("UIGradient")
+LBGGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(6,2,14)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(3,1,8)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(1,1,4)),
+})
+LBGGrad.Rotation = 45
+LBGGrad.Parent = LBG
 
+-- Red nebula left glow
+local LNebulaR = Instance.new("Frame")
+LNebulaR.Size = UDim2.new(0,500,0,500)
+LNebulaR.AnchorPoint = Vector2.new(0.5,0.5)
+LNebulaR.Position = UDim2.new(0.25,0,0.4,0)
+LNebulaR.BackgroundColor3 = Color3.fromRGB(120,8,8)
+LNebulaR.BackgroundTransparency = 0.75
+LNebulaR.BorderSizePixel = 0
+LNebulaR.ZIndex = 9999
+LNebulaR.Parent = LBG
+do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1,0) c.Parent = LNebulaR end
+
+-- Cyan nebula right glow
+local LNebulaC = Instance.new("Frame")
+LNebulaC.Size = UDim2.new(0,500,0,500)
+LNebulaC.AnchorPoint = Vector2.new(0.5,0.5)
+LNebulaC.Position = UDim2.new(0.72,0,0.45,0)
+LNebulaC.BackgroundColor3 = Color3.fromRGB(0,80,100)
+LNebulaC.BackgroundTransparency = 0.75
+LNebulaC.BorderSizePixel = 0
+LNebulaC.ZIndex = 9999
+LNebulaC.Parent = LBG
+do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1,0) c.Parent = LNebulaC end
+
+-- Center content container
 local LC = Instance.new("Frame")
-LC.Size = UDim2.new(0,300,0,220)
+LC.Size = UDim2.new(0,420,0,280)
 LC.AnchorPoint = Vector2.new(0.5,0.5)
-LC.Position = UDim2.new(0.5,0,0.5,0)
+LC.Position = UDim2.new(0.5,0,0.47,0)
 LC.BackgroundTransparency = 1
 LC.ZIndex = 10000
 LC.Parent = LBG
 
-local LLogo = Instance.new("Frame")
-LLogo.Size = UDim2.new(0,70,0,70)
-LLogo.AnchorPoint = Vector2.new(0.5,0)
-LLogo.Position = UDim2.new(0.5,0,0,0)
-LLogo.BackgroundColor3 = Color3.fromRGB(10,10,22)
-LLogo.BorderSizePixel = 0
-LLogo.ZIndex = 10001
-LLogo.Parent = LC
+-- Outer spinning ring (red)
+local LRingOuter = Instance.new("Frame")
+LRingOuter.Size = UDim2.new(0,190,0,190)
+LRingOuter.AnchorPoint = Vector2.new(0.5,0.5)
+LRingOuter.Position = UDim2.new(0.5,0,0.38,0)
+LRingOuter.BackgroundTransparency = 1
+LRingOuter.BorderSizePixel = 0
+LRingOuter.ZIndex = 10001
+LRingOuter.Parent = LC
 do
-    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0,16) c.Parent = LLogo
-    local s = Instance.new("UIStroke") s.Thickness = 2 s.Parent = LLogo
+    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1,0) c.Parent = LRingOuter
+    local s = Instance.new("UIStroke")
+    s.Thickness = 3
+    s.Color = Color3.fromRGB(220,30,30)
+    s.Transparency = 0.1
+    s.Parent = LRingOuter
+end
+
+-- Inner spinning ring (cyan)
+local LRingInner = Instance.new("Frame")
+LRingInner.Size = UDim2.new(0,150,0,150)
+LRingInner.AnchorPoint = Vector2.new(0.5,0.5)
+LRingInner.Position = UDim2.new(0.5,0,0.38,0)
+LRingInner.BackgroundTransparency = 1
+LRingInner.BorderSizePixel = 0
+LRingInner.ZIndex = 10001
+LRingInner.Parent = LC
+do
+    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1,0) c.Parent = LRingInner
+    local s = Instance.new("UIStroke")
+    s.Thickness = 2.5
+    s.Color = Color3.fromRGB(0,200,220)
+    s.Transparency = 0.15
+    s.Parent = LRingInner
+end
+
+-- Spiral center icon frame
+local LIconBG = Instance.new("Frame")
+LIconBG.Size = UDim2.new(0,64,0,64)
+LIconBG.AnchorPoint = Vector2.new(0.5,0.5)
+LIconBG.Position = UDim2.new(0.5,0,0.38,0)
+LIconBG.BackgroundColor3 = Color3.fromRGB(6,6,16)
+LIconBG.BorderSizePixel = 0
+LIconBG.ZIndex = 10002
+LIconBG.Parent = LC
+do
+    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1,0) c.Parent = LIconBG
+    local s = Instance.new("UIStroke") s.Thickness = 1.5 s.Transparency = 0.3 s.Parent = LIconBG
     local sg = Instance.new("UIGradient")
     sg.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(200,20,20)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,120,255)),
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,60,60)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,180,220)),
     })
     sg.Rotation = 135 sg.Parent = s
 end
 
-do
-    local lt = Instance.new("TextLabel")
-    lt.Size = UDim2.new(1,0,1,0)
-    lt.BackgroundTransparency = 1
-    lt.Text = "⚡"
-    lt.TextColor3 = Color3.fromRGB(255,255,255)
-    lt.Font = Enum.Font.GothamBold
-    lt.TextSize = 32
-    lt.ZIndex = 10002
-    lt.Parent = LLogo
-end
+local LIconLabel = Instance.new("TextLabel")
+LIconLabel.Size = UDim2.new(1,0,1,0)
+LIconLabel.BackgroundTransparency = 1
+LIconLabel.Text = "⚔"
+LIconLabel.TextColor3 = Color3.fromRGB(255,255,255)
+LIconLabel.Font = Enum.Font.GothamBold
+LIconLabel.TextSize = 28
+LIconLabel.ZIndex = 10003
+LIconLabel.Parent = LIconBG
 
-task.spawn(function()
-    while LGui.Parent do
-        TweenService:Create(LLogo, TweenInfo.new(0.8,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut), {Size=UDim2.new(0,76,0,76)}):Play()
-        task.wait(0.8)
-        TweenService:Create(LLogo, TweenInfo.new(0.8,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut), {Size=UDim2.new(0,70,0,70)}):Play()
-        task.wait(0.8)
-    end
-end)
-
+-- "Universal" title with red→white→cyan gradient
 local LTitle = Instance.new("TextLabel")
-LTitle.Size = UDim2.new(1,0,0,30)
-LTitle.Position = UDim2.new(0,0,0,82)
+LTitle.Size = UDim2.new(1,0,0,40)
+LTitle.Position = UDim2.new(0,0,0,170)
+LTitle.AnchorPoint = Vector2.new(0,0)
 LTitle.BackgroundTransparency = 1
-LTitle.Text = "UNIVERSAL GUNSHOOTER"
+LTitle.Text = "Universal"
 LTitle.TextColor3 = Color3.fromRGB(255,255,255)
 LTitle.Font = Enum.Font.GothamBold
-LTitle.TextSize = 18
+LTitle.TextSize = 36
 LTitle.TextTransparency = 1
 LTitle.ZIndex = 10001
 LTitle.Parent = LC
-
 do
     local g = Instance.new("UIGradient")
     g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,80,80)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200,200,255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(80,140,255)),
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,60,60)),
+        ColorSequenceKeypoint.new(0.45, Color3.fromRGB(230,230,255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,200,230)),
     })
     g.Parent = LTitle
 end
+TweenService:Create(LTitle, TweenInfo.new(0.7,Enum.EasingStyle.Quad), {TextTransparency=0}):Play()
 
-TweenService:Create(LTitle, TweenInfo.new(0.6,Enum.EasingStyle.Quad), {TextTransparency=0}):Play()
+-- By: DevNameGelo
+local LBy = Instance.new("TextLabel")
+LBy.Size = UDim2.new(1,0,0,18)
+LBy.Position = UDim2.new(0,0,0,212)
+LBy.BackgroundTransparency = 1
+LBy.Text = "By: DevNameGelo"
+LBy.TextColor3 = Color3.fromRGB(180,180,220)
+LBy.Font = Enum.Font.Gotham
+LBy.TextSize = 13
+LBy.ZIndex = 10001
+LBy.Parent = LC
 
-local LSub = Instance.new("TextLabel")
-LSub.Size = UDim2.new(1,0,0,16)
-LSub.Position = UDim2.new(0,0,0,115)
-LSub.BackgroundTransparency = 1
-LSub.Text = "Made by: DevNameGelo  |  Powered by: RGC  |  v1"
-LSub.TextColor3 = Color3.fromRGB(130,130,190)
-LSub.Font = Enum.Font.Gotham
-LSub.TextSize = 10
-LSub.ZIndex = 10001
-LSub.Parent = LC
+-- Loading status line
+local LLoadLine = Instance.new("TextLabel")
+LLoadLine.Size = UDim2.new(1,0,0,20)
+LLoadLine.Position = UDim2.new(0,0,1,-60)
+LLoadLine.AnchorPoint = Vector2.new(0,0)
+LLoadLine.BackgroundTransparency = 1
+LLoadLine.Text = "LOADING... [Establishing RGC Connection]"
+LLoadLine.TextColor3 = Color3.fromRGB(220,30,30)
+LLoadLine.Font = Enum.Font.GothamBold
+LLoadLine.TextSize = 13
+LLoadLine.ZIndex = 10001
+LLoadLine.Parent = LC
 
+-- Bottom status bar
 local LProgBG = Instance.new("Frame")
-LProgBG.Size = UDim2.new(1,0,0,5)
-LProgBG.Position = UDim2.new(0,0,0,146)
-LProgBG.BackgroundColor3 = Color3.fromRGB(20,20,40)
+LProgBG.Size = UDim2.new(1,0,0,4)
+LProgBG.Position = UDim2.new(0,0,1,-32)
+LProgBG.BackgroundColor3 = Color3.fromRGB(18,18,38)
 LProgBG.BorderSizePixel = 0
 LProgBG.ZIndex = 10001
 LProgBG.Parent = LC
@@ -1040,22 +1107,45 @@ do
     local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1,0) c.Parent = LProgFill
     local g = Instance.new("UIGradient")
     g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(200,20,20)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,140,255)),
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(220,30,30)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,180,220)),
     })
     g.Parent = LProgFill
 end
 
 local LStatus = Instance.new("TextLabel")
 LStatus.Size = UDim2.new(1,0,0,16)
-LStatus.Position = UDim2.new(0,0,0,158)
+LStatus.Position = UDim2.new(0,0,1,-16)
 LStatus.BackgroundTransparency = 1
-LStatus.Text = "Initializing..."
-LStatus.TextColor3 = Color3.fromRGB(110,110,170)
+LStatus.Text = "RGC Server Connection Established  |  System Integrity Check Complete"
+LStatus.TextColor3 = Color3.fromRGB(130,130,175)
 LStatus.Font = Enum.Font.Gotham
 LStatus.TextSize = 10
 LStatus.ZIndex = 10001
 LStatus.Parent = LC
+
+-- Spinning ring animations
+task.spawn(function()
+    local rot = 0
+    while LGui.Parent do
+        rot = rot + 2
+        LRingOuter.Rotation = rot
+        LRingInner.Rotation = -rot * 1.3
+        task.wait(0.03)
+    end
+end)
+
+-- Nebula pulse animation
+task.spawn(function()
+    while LGui.Parent do
+        TweenService:Create(LNebulaR, TweenInfo.new(2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut), {BackgroundTransparency=0.82}):Play()
+        TweenService:Create(LNebulaC, TweenInfo.new(2.5,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut), {BackgroundTransparency=0.82}):Play()
+        task.wait(2)
+        TweenService:Create(LNebulaR, TweenInfo.new(2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut), {BackgroundTransparency=0.7}):Play()
+        TweenService:Create(LNebulaC, TweenInfo.new(2.5,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut), {BackgroundTransparency=0.7}):Play()
+        task.wait(2)
+    end
+end)
 
 task.spawn(function()
     local ok, snd = pcall(function()
@@ -1085,18 +1175,20 @@ task.spawn(function()
     for i = 1, steps do
         local p = i/steps
         TweenService:Create(LProgFill, TweenInfo.new(dur/steps, Enum.EasingStyle.Linear), {Size=UDim2.new(p,0,1,0)}):Play()
-        LStatus.Text = statuses[math.clamp(math.ceil(p * #statuses),1,#statuses)]
+        LLoadLine.Text = "LOADING... ["..statuses[math.clamp(math.ceil(p * #statuses),1,#statuses)].."]"
         task.wait(dur/steps)
     end
-    task.wait(0.2)
-    TweenService:Create(LBG, TweenInfo.new(0.6,Enum.EasingStyle.Quad), {BackgroundTransparency=1}):Play()
+    LLoadLine.Text = "LOADING... [Complete!]"
+    task.wait(0.3)
+    TweenService:Create(LBG, TweenInfo.new(0.7,Enum.EasingStyle.Quad), {BackgroundTransparency=1}):Play()
     for _, v in ipairs(LBG:GetDescendants()) do
         pcall(function()
             if v:IsA("TextLabel") then TweenService:Create(v, TweenInfo.new(0.5), {TextTransparency=1}):Play() end
             if v:IsA("Frame") then TweenService:Create(v, TweenInfo.new(0.5), {BackgroundTransparency=1}):Play() end
+            if v:IsA("UIStroke") then TweenService:Create(v, TweenInfo.new(0.5), {Transparency=1}):Play() end
         end)
     end
-    task.wait(0.7)
+    task.wait(0.8)
     LGui:Destroy()
 end)
 
@@ -1169,7 +1261,7 @@ Panel.Position = UDim2.new(0,78,0.5,0)
 Panel.AnchorPoint = Vector2.new(0,0.5)
 Panel.BackgroundColor3 = Color3.fromRGB(8,8,14)
 Panel.BorderSizePixel = 0
-Panel.ClipsDescendants = true
+Panel.ClipsDescendants = false
 Panel.Visible = false
 Panel.ZIndex = 100
 Panel.Parent = GUI
@@ -1192,7 +1284,7 @@ do
 end
 
 local PH = Instance.new("Frame")
-PH.Size = UDim2.new(1,0,0,52)
+PH.Size = UDim2.new(1,0,0,58)
 PH.BackgroundColor3 = Color3.fromRGB(10,10,20)
 PH.BorderSizePixel = 0
 PH.ZIndex = 101
@@ -1221,34 +1313,47 @@ do
     dg.Parent = div
 end
 
+-- "Universal" large gradient title like Image 1
 local PHTitle = Instance.new("TextLabel")
-PHTitle.Size = UDim2.new(1,-40,0,26)
-PHTitle.Position = UDim2.new(0,12,0,5)
+PHTitle.Size = UDim2.new(1,-40,0,30)
+PHTitle.Position = UDim2.new(0,12,0,4)
 PHTitle.BackgroundTransparency = 1
-PHTitle.Text = "⚡ UNIVERSAL GUNSHOOTER v1"
+PHTitle.Text = "Universal"
 PHTitle.TextColor3 = Color3.fromRGB(255,255,255)
 PHTitle.Font = Enum.Font.GothamBold
-PHTitle.TextSize = 12
+PHTitle.TextSize = 20
 PHTitle.TextXAlignment = Enum.TextXAlignment.Left
 PHTitle.ZIndex = 102
 PHTitle.Parent = PH
 do
     local g = Instance.new("UIGradient")
     g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,100,100)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220,220,255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(100,160,255)),
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,60,60)),
+        ColorSequenceKeypoint.new(0.45, Color3.fromRGB(230,230,255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,200,230)),
     })
     g.Parent = PHTitle
 end
 
+local PHBy = Instance.new("TextLabel")
+PHBy.Size = UDim2.new(1,-40,0,13)
+PHBy.Position = UDim2.new(0,12,0,30)
+PHBy.BackgroundTransparency = 1
+PHBy.Text = "By:DevNameGelo"
+PHBy.TextColor3 = Color3.fromRGB(160,100,255)
+PHBy.Font = Enum.Font.GothamBold
+PHBy.TextSize = 10
+PHBy.TextXAlignment = Enum.TextXAlignment.Left
+PHBy.ZIndex = 102
+PHBy.Parent = PH
+
 local PHSub = Instance.new("TextLabel")
-PHSub.Size = UDim2.new(1,-40,0,14)
-PHSub.Position = UDim2.new(0,12,0,32)
+PHSub.Size = UDim2.new(1,-40,0,12)
+PHSub.Position = UDim2.new(0,12,0,40)
 PHSub.BackgroundTransparency = 1
-PHSub.Text = "by: DevNameGelo  •  Powered by: RGC"
+PHSub.Text = "Powered by:RGC"
 PHSub.TextColor3 = Color3.fromRGB(140,140,200)
-PHSub.Font = Enum.Font.Gotham
+PHSub.Font = Enum.Font.GothamBold
 PHSub.TextSize = 9
 PHSub.TextXAlignment = Enum.TextXAlignment.Left
 PHSub.ZIndex = 102
@@ -1256,7 +1361,7 @@ PHSub.Parent = PH
 
 local PHClose = Instance.new("TextButton")
 PHClose.Size = UDim2.new(0,26,0,26)
-PHClose.Position = UDim2.new(1,-32,0.5,-13)
+PHClose.Position = UDim2.new(1,-32,0.5,-14)
 PHClose.BackgroundColor3 = Color3.fromRGB(160,18,18)
 PHClose.Text = "✕"
 PHClose.TextColor3 = Color3.fromRGB(255,255,255)
@@ -1267,9 +1372,26 @@ PHClose.ZIndex = 103
 PHClose.Parent = PH
 do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0,6) c.Parent = PHClose end
 
+-- Clip container for visual masking only (Panel has ClipsDescendants=false for hit detection)
+local ClipFrame = Instance.new("Frame")
+ClipFrame.Size = UDim2.new(1,0,1,0)
+ClipFrame.BackgroundTransparency = 1
+ClipFrame.BorderSizePixel = 0
+ClipFrame.ClipsDescendants = true
+ClipFrame.ZIndex = 100
+ClipFrame.Parent = Panel
+
+-- Sync ClipFrame size with Panel tween
+task.spawn(function()
+    while Panel.Parent do
+        ClipFrame.Size = UDim2.new(1,0,1,0)
+        task.wait(0.05)
+    end
+end)
+
 local Scroll = Instance.new("ScrollingFrame")
-Scroll.Size = UDim2.new(1,0,1,-52)
-Scroll.Position = UDim2.new(0,0,0,52)
+Scroll.Size = UDim2.new(1,0,1,-58)
+Scroll.Position = UDim2.new(0,0,0,58)
 Scroll.BackgroundTransparency = 1
 Scroll.BorderSizePixel = 0
 Scroll.ScrollBarThickness = 2
@@ -1277,7 +1399,10 @@ Scroll.ScrollBarImageColor3 = Color3.fromRGB(200,20,20)
 Scroll.CanvasSize = UDim2.new(0,0,0,0)
 Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 Scroll.ZIndex = 101
-Scroll.Parent = Panel
+Scroll.Parent = ClipFrame
+
+-- Also move PH to ClipFrame
+PH.Parent = ClipFrame
 do
     local l = Instance.new("UIListLayout")
     l.Padding = UDim.new(0,5)
@@ -1874,33 +1999,50 @@ PHClose.MouseButton1Click:Connect(function() SetOpen(false) end)
 -- ===================== DRAG =====================
 local dp,ds,dpos = false,nil,nil
 local db,dbs,dbpos = false,nil,nil
+local dpDragging = false
+local dbDragging = false
+local DRAG_THRESHOLD = 6
 
 PH.InputBegan:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        dp = true ds = inp.Position dpos = Panel.Position
+        dp = true dpDragging = false ds = inp.Position dpos = Panel.Position
     end
 end)
 PH.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then dp = false end
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        dp = false dpDragging = false
+    end
 end)
 TB.InputBegan:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        db = true dbs = inp.Position dbpos = TB.Position
+        db = true dbDragging = false dbs = inp.Position dbpos = TB.Position
     end
 end)
 TB.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then db = false end
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        db = false dbDragging = false
+    end
 end)
 
 UserInputService.InputChanged:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
         if dp and ds then
             local d = inp.Position - ds
-            Panel.Position = UDim2.new(dpos.X.Scale, dpos.X.Offset+d.X, dpos.Y.Scale, dpos.Y.Offset+d.Y)
+            if not dpDragging and (math.abs(d.X) > DRAG_THRESHOLD or math.abs(d.Y) > DRAG_THRESHOLD) then
+                dpDragging = true
+            end
+            if dpDragging then
+                Panel.Position = UDim2.new(dpos.X.Scale, dpos.X.Offset+d.X, dpos.Y.Scale, dpos.Y.Offset+d.Y)
+            end
         end
         if db and dbs then
             local d = inp.Position - dbs
-            TB.Position = UDim2.new(dbpos.X.Scale, dbpos.X.Offset+d.X, dbpos.Y.Scale, dbpos.Y.Offset+d.Y)
+            if not dbDragging and (math.abs(d.X) > DRAG_THRESHOLD or math.abs(d.Y) > DRAG_THRESHOLD) then
+                dbDragging = true
+            end
+            if dbDragging then
+                TB.Position = UDim2.new(dbpos.X.Scale, dbpos.X.Offset+d.X, dbpos.Y.Scale, dbpos.Y.Offset+d.Y)
+            end
         end
     end
 end)
