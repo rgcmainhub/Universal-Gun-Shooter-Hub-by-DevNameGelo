@@ -103,7 +103,6 @@ LBGGrad.Color = ColorSequence.new({
 LBGGrad.Rotation = 135
 LBGGrad.Parent = LBG
 
--- Center card
 local LCard = Instance.new("Frame")
 LCard.Size = UDim2.new(0, 320, 0, 180)
 LCard.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -123,7 +122,6 @@ do
     g.Rotation = 90 g.Parent = s
 end
 
--- Spinning ring
 local LRing = Instance.new("Frame")
 LRing.Size = UDim2.new(0, 50, 0, 50)
 LRing.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -159,7 +157,6 @@ task.spawn(function()
     end
 end)
 
--- Title
 local LTitle = Instance.new("TextLabel")
 LTitle.Size = UDim2.new(1, 0, 0, 28)
 LTitle.Position = UDim2.new(0, 0, 0, 80)
@@ -191,7 +188,6 @@ LBy.TextSize = 11
 LBy.ZIndex = 10001
 LBy.Parent = LCard
 
--- Progress bar
 local LProgBG = Instance.new("Frame")
 LProgBG.Size = UDim2.new(1, -40, 0, 4)
 LProgBG.Position = UDim2.new(0, 20, 1, -38)
@@ -226,30 +222,6 @@ LStatus.Font = Enum.Font.Gotham
 LStatus.TextSize = 10
 LStatus.ZIndex = 10001
 LStatus.Parent = LCard
-
-task.spawn(function()
-    local dur = 3
-    local steps = 40
-    local statuses = {"Loading modules...","Calibrating aim core...","Setting up ESP...","Ready!"}
-    for i = 1, steps do
-        local p = i / steps
-        TweenService:Create(LProgFill, TweenInfo.new(dur/steps, Enum.EasingStyle.Linear), {Size = UDim2.new(p, 0, 1, 0)}):Play()
-        LStatus.Text = statuses[math.clamp(math.ceil(p * #statuses), 1, #statuses)]
-        task.wait(dur/steps)
-    end
-    LStatus.Text = "Complete!"
-    task.wait(0.25)
-    TweenService:Create(LBG, TweenInfo.new(0.6), {BackgroundTransparency = 1}):Play()
-    for _, v in ipairs(LBG:GetDescendants()) do
-        pcall(function()
-            if v:IsA("TextLabel") then TweenService:Create(v, TweenInfo.new(0.4), {TextTransparency = 1}):Play() end
-            if v:IsA("Frame") then TweenService:Create(v, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play() end
-            if v:IsA("UIStroke") then TweenService:Create(v, TweenInfo.new(0.4), {Transparency = 1}):Play() end
-        end)
-    end
-    task.wait(0.7)
-    LGui:Destroy()
-end)
 
 -- ===================== STATE =====================
 local FlyEnabled = false
@@ -1011,76 +983,26 @@ GUI.IgnoreGuiInset = true
 GUI.DisplayOrder = 100
 GUI.Parent = PlayerGui
 
--- Toggle Circle Button (always visible, mobile-friendly)
-local TB = Instance.new("TextButton")
-TB.Size = UDim2.new(0,50,0,50)
-TB.Position = UDim2.new(0,15,0.5,-25)
-TB.Text = ""
-TB.BorderSizePixel = 0
-TB.AutoButtonColor = false
-TB.ZIndex = 200
-TB.Parent = GUI
-do
-    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1,0) c.Parent = TB
-    local g = Instance.new("UIGradient")
-    g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(220,30,30)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,120,220)),
-    })
-    g.Rotation = 135 g.Parent = TB
-    local s = Instance.new("UIStroke") s.Thickness = 2 s.Parent = TB
-    local sg = Instance.new("UIGradient")
-    sg.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,100,100)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(100,160,255)),
-    })
-    sg.Rotation = 135 sg.Parent = s
+-- Responsive size
+local function GetScreenSize()
+    return workspace.CurrentCamera.ViewportSize
 end
 
-local TBIcon = Instance.new("TextLabel")
-TBIcon.Size = UDim2.new(1,0,1,0)
-TBIcon.BackgroundTransparency = 1
-TBIcon.Text = "U"
-TBIcon.TextColor3 = Color3.fromRGB(255,255,255)
-TBIcon.Font = Enum.Font.GothamBold
-TBIcon.TextSize = 22
-TBIcon.ZIndex = 201
-TBIcon.Parent = TB
-
--- Pulse glow
-local TBGlow = Instance.new("Frame")
-TBGlow.Size = UDim2.new(0,64,0,64)
-TBGlow.AnchorPoint = Vector2.new(0.5,0.5)
-TBGlow.Position = UDim2.new(0.5,0,0.5,0)
-TBGlow.BackgroundColor3 = Color3.fromRGB(150,20,20)
-TBGlow.BackgroundTransparency = 0.7
-TBGlow.BorderSizePixel = 0
-TBGlow.ZIndex = 199
-TBGlow.Parent = TB
-do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1,0) c.Parent = TBGlow end
-
-task.spawn(function()
-    while GUI.Parent do
-        TweenService:Create(TBGlow, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut), {Size=UDim2.new(0,70,0,70),BackgroundTransparency=0.9}):Play()
-        task.wait(1.2)
-        TweenService:Create(TBGlow, TweenInfo.new(1.2,Enum.EasingStyle.Sine,Enum.EasingDirection.InOut), {Size=UDim2.new(0,60,0,60),BackgroundTransparency=0.65}):Play()
-        task.wait(1.2)
-    end
-end)
-
--- Main Panel (responsive size)
-local screenSize = workspace.CurrentCamera.ViewportSize
+local screenSize = GetScreenSize()
 local isMobile = screenSize.X < 800
 local PANEL_W = isMobile and 290 or 520
 local PANEL_H = isMobile and 380 or 440
 
+-- ============ MAIN PANEL (created FIRST so button is on top) ============
 local Panel = Instance.new("Frame")
+Panel.Name = "MainPanel"
 Panel.Size = UDim2.new(0, PANEL_W, 0, 0)
 Panel.Position = UDim2.new(0.5, -PANEL_W/2, 0.5, -PANEL_H/2)
 Panel.BackgroundColor3 = Color3.fromRGB(10, 10, 18)
 Panel.BorderSizePixel = 0
 Panel.ClipsDescendants = false
 Panel.Visible = false
+Panel.Active = true
 Panel.ZIndex = 100
 Panel.Parent = GUI
 do
@@ -1096,9 +1018,11 @@ end
 
 -- Header
 local PH = Instance.new("Frame")
+PH.Name = "Header"
 PH.Size = UDim2.new(1,0,0,56)
 PH.BackgroundColor3 = Color3.fromRGB(14,14,24)
 PH.BorderSizePixel = 0
+PH.Active = true
 PH.ZIndex = 101
 PH.Parent = Panel
 do
@@ -1171,20 +1095,22 @@ PHSub.ZIndex = 102
 PHSub.Parent = PH
 
 local PHClose = Instance.new("TextButton")
-PHClose.Size = UDim2.new(0,28,0,28)
-PHClose.Position = UDim2.new(1,-36,0.5,-14)
+PHClose.Size = UDim2.new(0,30,0,30)
+PHClose.Position = UDim2.new(1,-38,0.5,-15)
 PHClose.BackgroundColor3 = Color3.fromRGB(160,18,18)
-PHClose.Text = "✕"
+PHClose.Text = "X"
 PHClose.TextColor3 = Color3.fromRGB(255,255,255)
-PHClose.TextSize = 12
+PHClose.TextSize = 14
 PHClose.Font = Enum.Font.GothamBold
 PHClose.BorderSizePixel = 0
-PHClose.ZIndex = 103
+PHClose.AutoButtonColor = true
+PHClose.ZIndex = 110
 PHClose.Parent = PH
 do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0,6) c.Parent = PHClose end
 
 -- Tab Bar
 local TabBar = Instance.new("Frame")
+TabBar.Name = "TabBar"
 TabBar.Size = UDim2.new(1,-20,0,36)
 TabBar.Position = UDim2.new(0,10,0,64)
 TabBar.BackgroundColor3 = Color3.fromRGB(14,14,24)
@@ -1207,6 +1133,7 @@ do
 end
 
 local Content = Instance.new("Frame")
+Content.Name = "Content"
 Content.Size = UDim2.new(1,-20,1,-112)
 Content.Position = UDim2.new(0,10,0,108)
 Content.BackgroundTransparency = 1
@@ -1214,9 +1141,8 @@ Content.ClipsDescendants = true
 Content.ZIndex = 101
 Content.Parent = Panel
 
-local Tabs = {} -- tab data
+local Tabs = {}
 
--- New tab names (renamed)
 local TabDefs = {
     {key="Combat", name="Aim", icon="🎯"},
     {key="Visuals", name="Vision", icon="👁"},
@@ -1296,7 +1222,7 @@ end
 
 -- ===================== UI BUILDERS =====================
 local function Tog(parent, name, desc, default, cb)
-    local tog = default or false
+    local tog = false
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1,0,0,52)
     card.BackgroundColor3 = Color3.fromRGB(15,15,26)
@@ -1627,25 +1553,10 @@ local function PlayerDropdown(parent, title, desc, accent, onSelect)
     openBtn.MouseButton1Click:Connect(function()
         if isOpen then CloseDropdown() else OpenDropdown() end
     end)
-    GUI.InputBegan:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-            if isOpen then
-                local mousePos = UserInputService:GetMouseLocation()
-                local dpPos = dropdown.AbsolutePosition
-                local dpSize = dropdown.AbsoluteSize
-                if mousePos.X < dpPos.X or mousePos.X > dpPos.X + dpSize.X or
-                   mousePos.Y < dpPos.Y or mousePos.Y > dpPos.Y + dpSize.Y then
-                    CloseDropdown()
-                end
-            end
-        end
-    end)
     return CloseDropdown
 end
 
 -- ===================== BUILD TABS =====================
-
--- AIM TAB (Combat)
 local AimTab = Tabs.Combat.scroll
 local setAimbot = Tog(AimTab, "Aimbot", "Aim ring + behind detection", false, function(v)
     AimbotEnabled = v
@@ -1698,23 +1609,17 @@ Tog(AimTab, "Kill Aura", "Kill humanoids within 20 studs", false, function(v)
     end
 end)
 
--- VISION TAB (Visuals)
 local VisTab = Tabs.Visuals.scroll
 Tog(VisTab, "Player ESP", "Blue=visible, Red=behind wall", false, function(v)
     ESPEnabled = v
     if not v then ClearESP() end
 end)
-
 Tog(VisTab, "Invisible", "Hide your character", false, function(v)
     ApplyInvisible(v)
-    if v then
-        ShowNotice("Invisible", "Visual only on your side", Color3.fromRGB(255,180,0), 4)
-    end
+    if v then ShowNotice("Invisible", "Visual only on your side", Color3.fromRGB(255,180,0), 4) end
 end)
-
 Tog(VisTab, "Full Bright", "Remove shadows, max brightness", false, function(v) ApplyFullBright(v) end)
 
--- MOTION TAB (Movement)
 local MotTab = Tabs.Movement.scroll
 Tog(MotTab, "Fly Mode", "WASD + Space/Shift", false, function(v)
     FlyEnabled = v
@@ -1723,16 +1628,12 @@ end)
 Sld(MotTab, "Fly Speed", 20, 200, 70, function(v) FlySpeed = v end)
 Tog(MotTab, "Noclip", "Walk through walls", false, function(v) ApplyNoclip(v) end)
 
--- SHIELD TAB (Player)
 local PlyTab = Tabs.Player.scroll
 Tog(PlyTab, "God Mode", "Infinite health", false, function(v)
     ApplyGodMode(v)
-    if v then
-        ShowNotice("God Mode", "May not work in all games", Color3.fromRGB(255,180,0), 4)
-    end
+    if v then ShowNotice("God Mode", "May not work in all games", Color3.fromRGB(255,180,0), 4) end
 end)
 
--- TOOLS TAB (Utility)
 local UtlTab = Tabs.Utility.scroll
 PlayerDropdown(UtlTab, "Teleport to Player", "Tap ▼ to pick a player", Color3.fromRGB(0,100,220), function(target)
     TeleportTo(target)
@@ -1744,14 +1645,13 @@ Tog(UtlTab, "Stop Spectating", "Return camera to yourself", false, function(v)
     if v then StopSpectate() end
 end)
 
--- WORLD TAB
 local WrlTab = Tabs.World.scroll
 Tog(WrlTab, "FPS Boost", "Lower graphics, remove effects", false, function(v) ApplyFPSBoost(v) end)
 
 local tipL = Instance.new("TextLabel")
 tipL.Size = UDim2.new(1,0,0,32)
 tipL.BackgroundTransparency = 1
-tipL.Text = "⚠ Enable Aimbot before Smart Aim / Smart TP\nUniversal Aim Core v1"
+tipL.Text = "Enable Aimbot before Smart Aim / Smart TP\nUniversal Aim Core v1"
 tipL.TextColor3 = Color3.fromRGB(80,80,130)
 tipL.Font = Enum.Font.Gotham
 tipL.TextSize = 10
@@ -1759,77 +1659,172 @@ tipL.TextWrapped = true
 tipL.ZIndex = 102
 tipL.Parent = WrlTab
 
--- Default tab
 SwitchTab("Combat")
 
--- ===================== OPEN/CLOSE =====================
+-- ============ TOGGLE CIRCLE BUTTON (created LAST to be on top) ============
+local TB = Instance.new("TextButton")
+TB.Name = "ToggleCircle"
+TB.Size = UDim2.new(0,55,0,55)
+TB.Position = UDim2.new(0,20,0.5,-27)
+TB.Text = "U"
+TB.TextColor3 = Color3.fromRGB(255,255,255)
+TB.TextSize = 22
+TB.Font = Enum.Font.GothamBold
+TB.BorderSizePixel = 0
+TB.AutoButtonColor = false
+TB.Active = true
+TB.Selectable = true
+TB.ZIndex = 1000
+TB.Parent = GUI
+
+do
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(1,0)
+    c.Parent = TB
+
+    local g = Instance.new("UIGradient")
+    g.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(220,30,30)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,120,220)),
+    })
+    g.Rotation = 135
+    g.Parent = TB
+
+    local s = Instance.new("UIStroke")
+    s.Thickness = 2
+    s.Parent = TB
+    local sg = Instance.new("UIGradient")
+    sg.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,100,100)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(100,160,255)),
+    })
+    sg.Rotation = 135
+    sg.Parent = s
+end
+
+-- ===================== OPEN/CLOSE FUNCTIONS =====================
 local function SetOpen(v)
     UIOpen = v
     if v then
         Panel.Visible = true
         Panel.Size = UDim2.new(0, PANEL_W, 0, 0)
         TweenService:Create(Panel, TweenInfo.new(0.28,Enum.EasingStyle.Back,Enum.EasingDirection.Out), {Size=UDim2.new(0, PANEL_W, 0, PANEL_H)}):Play()
+        TB.Text = "X"
     else
         TweenService:Create(Panel, TweenInfo.new(0.2,Enum.EasingStyle.Quad,Enum.EasingDirection.In), {Size=UDim2.new(0, PANEL_W, 0, 0)}):Play()
         task.delay(0.22, function() if not UIOpen then Panel.Visible = false end end)
+        TB.Text = "U"
     end
 end
 
-PHClose.MouseButton1Click:Connect(function() SetOpen(false) end)
+PHClose.MouseButton1Click:Connect(function()
+    SetOpen(false)
+end)
 
--- ===================== DRAG (mobile-friendly) =====================
-local dp,ds,dpos = false,nil,nil
-local db,dbs,dbpos = false,nil,nil
-local dpDragging = false
-local dbDragging = false
-local DRAG_THRESHOLD = 6
+-- ===================== DRAG SYSTEM (FIXED) =====================
+-- Toggle Button Drag/Click
+local tbDragging = false
+local tbMoved = false
+local tbStartPos = nil
+local tbStartUI = nil
+local DRAG_THRESHOLD = 8
+
+TB.InputBegan:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        tbDragging = true
+        tbMoved = false
+        tbStartPos = inp.Position
+        tbStartUI = TB.Position
+    end
+end)
+
+TB.InputEnded:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        if tbDragging then
+            -- If didn't move (or moved very little) = treat as click
+            if not tbMoved then
+                SetOpen(not UIOpen)
+            end
+        end
+        tbDragging = false
+        tbMoved = false
+    end
+end)
+
+-- Panel Header Drag
+local phDragging = false
+local phStartPos = nil
+local phStartUI = nil
 
 PH.InputBegan:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        dp = true dpDragging = false ds = inp.Position dpos = Panel.Position
-    end
-end)
-PH.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        dp = false dpDragging = false
-    end
-end)
-TB.InputBegan:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        db = true dbDragging = false dbs = inp.Position dbpos = TB.Position
-    end
-end)
-TB.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        -- if not dragged, toggle
-        if not dbDragging then
-            SetOpen(not UIOpen)
-        end
-        db = false dbDragging = false
+        phDragging = true
+        phStartPos = inp.Position
+        phStartUI = Panel.Position
     end
 end)
 
+PH.InputEnded:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        phDragging = false
+    end
+end)
+
+-- Global Input Changed for dragging
 UserInputService.InputChanged:Connect(function(inp)
     if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
-        if dp and ds then
-            local d = inp.Position - ds
-            if not dpDragging and (math.abs(d.X) > DRAG_THRESHOLD or math.abs(d.Y) > DRAG_THRESHOLD) then
-                dpDragging = true
+        -- Drag the toggle button
+        if tbDragging and tbStartPos and tbStartUI then
+            local delta = inp.Position - tbStartPos
+            if math.abs(delta.X) > DRAG_THRESHOLD or math.abs(delta.Y) > DRAG_THRESHOLD then
+                tbMoved = true
             end
-            if dpDragging then
-                Panel.Position = UDim2.new(dpos.X.Scale, dpos.X.Offset+d.X, dpos.Y.Scale, dpos.Y.Offset+d.Y)
+            if tbMoved then
+                TB.Position = UDim2.new(
+                    tbStartUI.X.Scale,
+                    tbStartUI.X.Offset + delta.X,
+                    tbStartUI.Y.Scale,
+                    tbStartUI.Y.Offset + delta.Y
+                )
             end
         end
-        if db and dbs then
-            local d = inp.Position - dbs
-            if not dbDragging and (math.abs(d.X) > DRAG_THRESHOLD or math.abs(d.Y) > DRAG_THRESHOLD) then
-                dbDragging = true
-            end
-            if dbDragging then
-                TB.Position = UDim2.new(dbpos.X.Scale, dbpos.X.Offset+d.X, dbpos.Y.Scale, dbpos.Y.Offset+d.Y)
-            end
+        -- Drag the panel
+        if phDragging and phStartPos and phStartUI then
+            local delta = inp.Position - phStartPos
+            Panel.Position = UDim2.new(
+                phStartUI.X.Scale,
+                phStartUI.X.Offset + delta.X,
+                phStartUI.Y.Scale,
+                phStartUI.Y.Offset + delta.Y
+            )
         end
     end
+end)
+
+-- ===================== LOADING SCREEN PROGRESS =====================
+task.spawn(function()
+    local dur = 3
+    local steps = 40
+    local statuses = {"Loading modules...","Calibrating aim core...","Setting up ESP...","Ready!"}
+    for i = 1, steps do
+        local p = i / steps
+        TweenService:Create(LProgFill, TweenInfo.new(dur/steps, Enum.EasingStyle.Linear), {Size = UDim2.new(p, 0, 1, 0)}):Play()
+        LStatus.Text = statuses[math.clamp(math.ceil(p * #statuses), 1, #statuses)]
+        task.wait(dur/steps)
+    end
+    LStatus.Text = "Complete!"
+    task.wait(0.25)
+    TweenService:Create(LBG, TweenInfo.new(0.6), {BackgroundTransparency = 1}):Play()
+    for _, v in ipairs(LBG:GetDescendants()) do
+        pcall(function()
+            if v:IsA("TextLabel") then TweenService:Create(v, TweenInfo.new(0.4), {TextTransparency = 1}):Play() end
+            if v:IsA("Frame") then TweenService:Create(v, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play() end
+            if v:IsA("UIStroke") then TweenService:Create(v, TweenInfo.new(0.4), {Transparency = 1}):Play() end
+        end)
+    end
+    task.wait(0.7)
+    LGui:Destroy()
+    ShowNotice("Universal Aim Core", "Tap the U circle to open the menu!", Color3.fromRGB(0,200,255), 4)
 end)
 
 -- ===================== MAIN LOOP =====================
