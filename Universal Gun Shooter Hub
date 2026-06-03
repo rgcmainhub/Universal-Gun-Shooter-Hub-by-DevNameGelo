@@ -1,5 +1,4 @@
 -- Universal Aim Core v1 | By: DevNameGelo | Powered by: RGC
--- Professional Fluent-Style Gaming UI Hub
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,18 +8,18 @@ local Lighting = game:GetService("Lighting")
 local TeleportService = game:GetService("TeleportService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local Stats = game:GetService("Stats")
+local Workspace = game:GetService("Workspace")
 
 local Player = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- Cleanup
 for _, name in ipairs({"UACLoad","UACMain","UACOverlay","UACNotify","UACFPS"}) do
     local g = PlayerGui:FindFirstChild(name)
     if g then g:Destroy() end
 end
 
--- ========== HELPER: DEVICE ==========
+-- ========== DEVICE ==========
 local function GetDevice(plr)
     if plr == Player then
         if UserInputService.TouchEnabled and not UserInputService.MouseEnabled and not UserInputService.KeyboardEnabled then
@@ -31,7 +30,6 @@ local function GetDevice(plr)
             return "💻 PC"
         end
     else
-        -- Best-guess for other players (not 100%)
         return "💻 PC"
     end
 end
@@ -43,6 +41,7 @@ local function GetGameName()
 end
 
 local GAME_NAME = GetGameName()
+local IS_MOBILE = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
 
 -- ========== NOTIFY ==========
 local NotifyGui = Instance.new("ScreenGui")
@@ -107,7 +106,7 @@ local function ShowNotice(title, text, color, duration)
     end)
 end
 
--- ========== LOADING SCREEN ==========
+-- ========== CINEMATIC LOADING SCREEN ==========
 local LGui = Instance.new("ScreenGui")
 LGui.Name = "UACLoad"
 LGui.ResetOnSpawn = false
@@ -117,162 +116,354 @@ LGui.Parent = PlayerGui
 
 local LBG = Instance.new("Frame")
 LBG.Size = UDim2.new(1, 0, 1, 0)
-LBG.BackgroundColor3 = Color3.fromRGB(6, 6, 12)
+LBG.BackgroundColor3 = Color3.fromRGB(2, 2, 6)
 LBG.BorderSizePixel = 0
 LBG.ZIndex = 9999
 LBG.Parent = LGui
 
+-- Galaxy background gradient
 local LBGGrad = Instance.new("UIGradient")
 LBGGrad.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 6, 22)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(4, 6, 16))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 4, 22)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(2, 4, 14)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(4, 8, 24))
 })
-LBGGrad.Rotation = 135
+LBGGrad.Rotation = 45
 LBGGrad.Parent = LBG
 
-local LCard = Instance.new("Frame")
-LCard.Size = UDim2.new(0, 320, 0, 180)
-LCard.AnchorPoint = Vector2.new(0.5, 0.5)
-LCard.Position = UDim2.new(0.5, 0, 0.5, 0)
-LCard.BackgroundColor3 = Color3.fromRGB(14, 14, 22)
-LCard.BorderSizePixel = 0
-LCard.ZIndex = 10000
-LCard.Parent = LBG
-do
-    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0, 12) c.Parent = LCard
-    local s = Instance.new("UIStroke") s.Thickness = 1.5 s.Parent = LCard
-    local g = Instance.new("UIGradient")
-    g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(220, 30, 30)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 160, 255))
-    })
-    g.Rotation = 90 g.Parent = s
+-- Animated background gradient rotation
+task.spawn(function()
+    local r = 45
+    while LGui.Parent do
+        r = (r + 0.4) % 360
+        LBGGrad.Rotation = r
+        task.wait(0.03)
+    end
+end)
+
+-- Star field container
+local StarLayer = Instance.new("Frame")
+StarLayer.Size = UDim2.new(1, 0, 1, 0)
+StarLayer.BackgroundTransparency = 1
+StarLayer.ClipsDescendants = true
+StarLayer.ZIndex = 9999
+StarLayer.Parent = LBG
+
+-- Generate stars
+local stars = {}
+for i = 1, 60 do
+    local star = Instance.new("Frame")
+    local sz = math.random(1, 3)
+    star.Size = UDim2.new(0, sz, 0, sz)
+    star.Position = UDim2.new(math.random(), 0, math.random(), 0)
+    star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    star.BackgroundTransparency = math.random(30, 80) / 100
+    star.BorderSizePixel = 0
+    star.ZIndex = 9999
+    star.Parent = StarLayer
+    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1, 0) c.Parent = star
+    table.insert(stars, {obj=star, baseTrans=star.BackgroundTransparency, phase=math.random()*math.pi*2})
 end
 
-local LRing = Instance.new("Frame")
-LRing.Size = UDim2.new(0, 50, 0, 50)
-LRing.AnchorPoint = Vector2.new(0.5, 0.5)
-LRing.Position = UDim2.new(0.5, 0, 0, 45)
-LRing.BackgroundTransparency = 1
-LRing.ZIndex = 10001
-LRing.Parent = LCard
+-- Twinkling stars
+task.spawn(function()
+    while LGui.Parent do
+        for _, s in ipairs(stars) do
+            s.phase = s.phase + 0.08
+            s.obj.BackgroundTransparency = s.baseTrans + math.sin(s.phase) * 0.3
+        end
+        task.wait(0.05)
+    end
+end)
+
+-- Galaxy spiral container (center glow)
+local GalaxyCenter = Instance.new("Frame")
+GalaxyCenter.Size = UDim2.new(0, 600, 0, 600)
+GalaxyCenter.AnchorPoint = Vector2.new(0.5, 0.5)
+GalaxyCenter.Position = UDim2.new(0.5, 0, 0.5, 0)
+GalaxyCenter.BackgroundTransparency = 1
+GalaxyCenter.ZIndex = 9999
+GalaxyCenter.Parent = LBG
+
+-- Multiple rotating galaxy rings
+local function MakeGalaxyRing(size, thickness, color1, color2, speed, dir)
+    local ring = Instance.new("Frame")
+    ring.Size = UDim2.new(0, size, 0, size)
+    ring.AnchorPoint = Vector2.new(0.5, 0.5)
+    ring.Position = UDim2.new(0.5, 0, 0.5, 0)
+    ring.BackgroundTransparency = 1
+    ring.ZIndex = 9999
+    ring.Parent = GalaxyCenter
+    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1, 0) c.Parent = ring
+    local s = Instance.new("UIStroke")
+    s.Thickness = thickness
+    s.Transparency = 0.4
+    s.Parent = ring
+    local g = Instance.new("UIGradient")
+    g.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, color1),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,255,255)),
+        ColorSequenceKeypoint.new(1, color2)
+    })
+    g.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(0.25, 0.3),
+        NumberSequenceKeypoint.new(0.5, 0),
+        NumberSequenceKeypoint.new(0.75, 0.3),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    g.Parent = s
+    task.spawn(function()
+        local r = 0
+        while LGui.Parent and ring.Parent do
+            r = r + speed * dir
+            ring.Rotation = r
+            task.wait(0.02)
+        end
+    end)
+    return ring, s, g
+end
+
+MakeGalaxyRing(420, 2, Color3.fromRGB(220,30,30), Color3.fromRGB(0,160,255), 0.8, 1)
+MakeGalaxyRing(340, 1.5, Color3.fromRGB(180,60,255), Color3.fromRGB(0,200,255), 1.2, -1)
+MakeGalaxyRing(260, 1, Color3.fromRGB(255,80,80), Color3.fromRGB(80,180,255), 1.8, 1)
+MakeGalaxyRing(180, 0.8, Color3.fromRGB(255,255,255), Color3.fromRGB(200,200,255), 2.5, -1)
+
+-- Center black hole (dark vortex)
+local BlackHole = Instance.new("Frame")
+BlackHole.Size = UDim2.new(0, 120, 0, 120)
+BlackHole.AnchorPoint = Vector2.new(0.5, 0.5)
+BlackHole.Position = UDim2.new(0.5, 0, 0.5, 0)
+BlackHole.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+BlackHole.BorderSizePixel = 0
+BlackHole.ZIndex = 10000
+BlackHole.Parent = GalaxyCenter
 do
-    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1, 0) c.Parent = LRing
-    local s = Instance.new("UIStroke") s.Thickness = 3 s.Parent = LRing
+    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1, 0) c.Parent = BlackHole
+    local g = Instance.new("UIGradient")
+    g.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(40,10,60)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,0,0)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(10,30,60))
+    })
+    g.Parent = BlackHole
+    local s = Instance.new("UIStroke")
+    s.Thickness = 2
+    s.Parent = BlackHole
+    local sg = Instance.new("UIGradient")
+    sg.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,60,60)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,200,255))
+    })
+    sg.Parent = s
+end
+
+-- Netflix-style moving horizontal lines
+local LinesLayer = Instance.new("Frame")
+LinesLayer.Size = UDim2.new(1, 0, 1, 0)
+LinesLayer.BackgroundTransparency = 1
+LinesLayer.ClipsDescendants = true
+LinesLayer.ZIndex = 10001
+LinesLayer.Parent = LBG
+
+local function MakeMovingLine(yScale, color, speed, thickness)
+    local line = Instance.new("Frame")
+    line.Size = UDim2.new(0, 200, 0, thickness)
+    line.Position = UDim2.new(-0.2, 0, yScale, 0)
+    line.BackgroundColor3 = color
+    line.BorderSizePixel = 0
+    line.ZIndex = 10001
+    line.Parent = LinesLayer
+    local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1, 0) c.Parent = line
+    local g = Instance.new("UIGradient")
+    g.Color = ColorSequence.new(color)
+    g.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(0.5, 0.2),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    g.Parent = line
+    task.spawn(function()
+        while LGui.Parent and line.Parent do
+            line.Position = UDim2.new(-0.2, 0, yScale, 0)
+            TweenService:Create(line, TweenInfo.new(speed, Enum.EasingStyle.Linear), {Position = UDim2.new(1.2, 0, yScale, 0)}):Play()
+            task.wait(speed + math.random() * 1.5)
+        end
+    end)
+end
+
+MakeMovingLine(0.15, Color3.fromRGB(255,40,60), 2.5, 2)
+MakeMovingLine(0.3, Color3.fromRGB(0,180,255), 3, 1)
+MakeMovingLine(0.7, Color3.fromRGB(0,200,255), 2.8, 2)
+MakeMovingLine(0.85, Color3.fromRGB(220,30,30), 3.5, 1)
+MakeMovingLine(0.45, Color3.fromRGB(180,80,255), 4, 1)
+
+-- Vertical scanning lines (cinematic effect)
+local function MakeVerticalLine(xScale, color, speed)
+    local line = Instance.new("Frame")
+    line.Size = UDim2.new(0, 1, 0, 80)
+    line.Position = UDim2.new(xScale, 0, -0.2, 0)
+    line.BackgroundColor3 = color
+    line.BorderSizePixel = 0
+    line.ZIndex = 10001
+    line.Parent = LinesLayer
+    local g = Instance.new("UIGradient")
+    g.Color = ColorSequence.new(color)
+    g.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(0.5, 0.1),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    g.Rotation = 90
+    g.Parent = line
+    task.spawn(function()
+        while LGui.Parent and line.Parent do
+            line.Position = UDim2.new(xScale, 0, -0.2, 0)
+            TweenService:Create(line, TweenInfo.new(speed, Enum.EasingStyle.Linear), {Position = UDim2.new(xScale, 0, 1.2, 0)}):Play()
+            task.wait(speed + math.random() * 2)
+        end
+    end)
+end
+
+MakeVerticalLine(0.2, Color3.fromRGB(255,80,80), 3)
+MakeVerticalLine(0.4, Color3.fromRGB(0,200,255), 4)
+MakeVerticalLine(0.6, Color3.fromRGB(220,30,30), 3.5)
+MakeVerticalLine(0.8, Color3.fromRGB(80,180,255), 4.5)
+
+-- Title text card
+local LCard = Instance.new("Frame")
+LCard.Size = UDim2.new(0, 360, 0, 90)
+LCard.AnchorPoint = Vector2.new(0.5, 0.5)
+LCard.Position = UDim2.new(0.5, 0, 0.5, 0)
+LCard.BackgroundTransparency = 1
+LCard.ZIndex = 10002
+LCard.Parent = LBG
+
+local LTitle = Instance.new("TextLabel")
+LTitle.Size = UDim2.new(1, 0, 0, 38)
+LTitle.Position = UDim2.new(0, 0, 0, 0)
+LTitle.BackgroundTransparency = 1
+LTitle.Text = "UNIVERSAL AIM CORE"
+LTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+LTitle.Font = Enum.Font.GothamBold
+LTitle.TextSize = 26
+LTitle.ZIndex = 10003
+LTitle.Parent = LCard
+do
     local g = Instance.new("UIGradient")
     g.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 60, 60)),
         ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 200, 255))
     })
-    g.Rotation = 90 g.Parent = s
-    local t = Instance.new("UIGradient")
-    t.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(0.5, 0.3),
-        NumberSequenceKeypoint.new(1, 0.9)
-    })
-    t.Parent = s
-end
-
-task.spawn(function()
-    local rot = 0
-    while LGui.Parent do
-        rot = rot + 4
-        LRing.Rotation = rot
-        task.wait(0.02)
-    end
-end)
-
-local LTitle = Instance.new("TextLabel")
-LTitle.Size = UDim2.new(1, 0, 0, 26)
-LTitle.Position = UDim2.new(0, 0, 0, 82)
-LTitle.BackgroundTransparency = 1
-LTitle.Text = "Universal Aim Core"
-LTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-LTitle.Font = Enum.Font.GothamBold
-LTitle.TextSize = 19
-LTitle.ZIndex = 10001
-LTitle.Parent = LCard
-do
-    local g = Instance.new("UIGradient")
-    g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 60, 60)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(230, 230, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 200, 230))
-    })
     g.Parent = LTitle
+    -- Animate title gradient
+    task.spawn(function()
+        local r = 0
+        while LGui.Parent and LTitle.Parent do
+            r = (r + 1) % 360
+            g.Rotation = r
+            task.wait(0.04)
+        end
+    end)
 end
 
 local LBy = Instance.new("TextLabel")
-LBy.Size = UDim2.new(1, 0, 0, 14)
-LBy.Position = UDim2.new(0, 0, 0, 108)
+LBy.Size = UDim2.new(1, 0, 0, 16)
+LBy.Position = UDim2.new(0, 0, 0, 42)
 LBy.BackgroundTransparency = 1
 LBy.Text = "By: DevNameGelo  •  Powered by: RGC  •  v1"
-LBy.TextColor3 = Color3.fromRGB(150, 150, 195)
+LBy.TextColor3 = Color3.fromRGB(180, 180, 220)
 LBy.Font = Enum.Font.Gotham
-LBy.TextSize = 11
-LBy.ZIndex = 10001
+LBy.TextSize = 12
+LBy.ZIndex = 10003
 LBy.Parent = LCard
 
+-- Glowing line under title
+local LLine = Instance.new("Frame")
+LLine.Size = UDim2.new(0, 0, 0, 1)
+LLine.Position = UDim2.new(0.5, 0, 0, 64)
+LLine.AnchorPoint = Vector2.new(0.5, 0)
+LLine.BackgroundColor3 = Color3.fromRGB(255,255,255)
+LLine.BorderSizePixel = 0
+LLine.ZIndex = 10003
+LLine.Parent = LCard
+do
+    local g = Instance.new("UIGradient")
+    g.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(220,30,30)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255,255,255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,180,255))
+    })
+    g.Parent = LLine
+end
+TweenService:Create(LLine, TweenInfo.new(1.5, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 280, 0, 1)}):Play()
+
+-- Bottom progress bar
 local LProgBG = Instance.new("Frame")
-LProgBG.Size = UDim2.new(1, -40, 0, 4)
-LProgBG.Position = UDim2.new(0, 20, 1, -38)
-LProgBG.BackgroundColor3 = Color3.fromRGB(22, 22, 38)
+LProgBG.Size = UDim2.new(0, 320, 0, 3)
+LProgBG.AnchorPoint = Vector2.new(0.5, 0)
+LProgBG.Position = UDim2.new(0.5, 0, 0.78, 0)
+LProgBG.BackgroundColor3 = Color3.fromRGB(20, 20, 35)
 LProgBG.BorderSizePixel = 0
-LProgBG.ZIndex = 10001
-LProgBG.Parent = LCard
+LProgBG.ZIndex = 10002
+LProgBG.Parent = LBG
 do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1, 0) c.Parent = LProgBG end
 
 local LProgFill = Instance.new("Frame")
 LProgFill.Size = UDim2.new(0, 0, 1, 0)
 LProgFill.BorderSizePixel = 0
-LProgFill.ZIndex = 10002
+LProgFill.ZIndex = 10003
 LProgFill.Parent = LProgBG
 do
     local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1, 0) c.Parent = LProgFill
     local g = Instance.new("UIGradient")
     g.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(220, 30, 30)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 180, 255))
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(180, 80, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 200, 255))
     })
     g.Parent = LProgFill
 end
 
 local LStatus = Instance.new("TextLabel")
-LStatus.Size = UDim2.new(1, -20, 0, 16)
-LStatus.Position = UDim2.new(0, 10, 1, -20)
+LStatus.Size = UDim2.new(1, 0, 0, 16)
+LStatus.Position = UDim2.new(0, 0, 0.82, 0)
 LStatus.BackgroundTransparency = 1
 LStatus.Text = "Establishing RGC Connection..."
 LStatus.TextColor3 = Color3.fromRGB(160, 160, 200)
-LStatus.Font = Enum.Font.Gotham
-LStatus.TextSize = 10
-LStatus.ZIndex = 10001
-LStatus.Parent = LCard
+LStatus.Font = Enum.Font.GothamBold
+LStatus.TextSize = 11
+LStatus.ZIndex = 10003
+LStatus.Parent = LBG
 
 -- ========== STATE ==========
 local FlyEnabled = false
 local FlySpeed = 70
 local WalkSpeed = 16
 local JumpPower = 50
-local AutoJumpEnabled = false
 local ESPEnabled = false
 local AimbotEnabled = false
 local SmartAimEnabled = false
 local SmartTPEnabled = false
+local AutoTPEnabled = false
+local AutoTPMode = "Closest" -- "Closest" or "Random"
 local TP_COOLDOWN = 0.5
-local KillAuraEnabled = false
+local TP_DISTANCE = 12 -- studs above target (safe distance)
 local NoclipEnabled = false
+local AutoTPNoclipActive = false -- separate noclip for auto tp
 local InvisibleEnabled = false
 local GodModeEnabled = false
 local FullBrightEnabled = false
 local FPSBoostEnabled = false
-local PhantomBulletEnabled = false
+local FPSCounterEnabled = true
+local NoGravityEnabled = false
+local AntiKickEnabled = false
 local UIOpen = false
-local CurrentTab = "Combat"
+local CurrentTab = "Profile"
 
 local Char = {}
-local FlyChar, FlyHum, FlyRoot, FlyVel, FlyAtt = nil,nil,nil,nil,nil
+local FlyChar, FlyHum, FlyRoot, FlyVel, FlyAtt, FlyGyro = nil,nil,nil,nil,nil,nil
 local FlyRightShoulder, FlyLeftShoulder = nil, nil
 
 local OrigLight = {
@@ -284,20 +475,21 @@ local OrigLight = {
     OutdoorAmbient = Lighting.OutdoorAmbient,
 }
 
-local NoclipConn, GodConn, KillConn, SpectateConn, SmartTPConn, BehindConn, AutoJumpConn, PhantomConn = nil,nil,nil,nil,nil,nil,nil,nil
+local OrigGravity = Workspace.Gravity
+local NoclipConn, GodConn, SpectateConn, SmartTPConn, BehindConn, AutoTPConn, AutoTPNoclipConn = nil,nil,nil,nil,nil,nil,nil
 local ESPObjects = {}
 local OrigTransparency = {}
 local FF_Object = nil
 local lastBehindAlert = 0
 local BEHIND_COOLDOWN = 4
 local lastTPTime = 0
+local lastAutoTPTime = 0
 
 -- ========== CHARACTER SETUP ==========
 local function SetupChar(c)
     Char.Model = c
     Char.Humanoid = c:WaitForChild("Humanoid")
     Char.Root = c:WaitForChild("HumanoidRootPart")
-    -- Apply walkspeed/jump
     pcall(function()
         Char.Humanoid.WalkSpeed = WalkSpeed
         Char.Humanoid.JumpPower = JumpPower
@@ -313,8 +505,10 @@ Player.CharacterAdded:Connect(function(c)
     task.wait(0.5)
     FlyEnabled = false
     NoclipEnabled = false
+    AutoTPNoclipActive = false
     if FlyVel then pcall(function() FlyVel:Destroy() end) FlyVel = nil end
     if FlyAtt then pcall(function() FlyAtt:Destroy() end) FlyAtt = nil end
+    if FlyGyro then pcall(function() FlyGyro:Destroy() end) FlyGyro = nil end
     if FF_Object then pcall(function() FF_Object:Destroy() end) FF_Object = nil end
     SetupChar(c)
     if GodModeEnabled then
@@ -325,7 +519,7 @@ Player.CharacterAdded:Connect(function(c)
     end
 end)
 
--- ========== FLY (NEW STRUCTURE) ==========
+-- ========== FLY (MOBILE-FRIENDLY, NO SHAKING) ==========
 local function SetupFlyCharacter(c)
     FlyChar = c
     FlyHum = c:WaitForChild("Humanoid")
@@ -341,15 +535,26 @@ local function StartFly()
     if not FlyRoot then return end
     if FlyAtt then pcall(function() FlyAtt:Destroy() end) end
     if FlyVel then pcall(function() FlyVel:Destroy() end) end
+    if FlyGyro then pcall(function() FlyGyro:Destroy() end) end
+
     FlyAtt = Instance.new("Attachment")
     FlyAtt.Parent = FlyRoot
+
     FlyVel = Instance.new("LinearVelocity")
     FlyVel.Attachment0 = FlyAtt
     FlyVel.RelativeTo = Enum.ActuatorRelativeTo.World
     FlyVel.MaxForce = math.huge
     FlyVel.VectorVelocity = Vector3.zero
     FlyVel.Parent = FlyRoot
-    -- Superman pose
+
+    -- BodyGyro stabilizer (prevents shaking)
+    FlyGyro = Instance.new("AlignOrientation")
+    FlyGyro.Attachment0 = FlyAtt
+    FlyGyro.Mode = Enum.OrientationAlignmentMode.OneAttachment
+    FlyGyro.Responsiveness = 50
+    FlyGyro.MaxTorque = math.huge
+    FlyGyro.Parent = FlyRoot
+
     if FlyRightShoulder then
         FlyRightShoulder.Transform = CFrame.Angles(math.rad(-90), 0, 0)
     end
@@ -361,6 +566,7 @@ end
 local function StopFly()
     if FlyVel then pcall(function() FlyVel:Destroy() end) FlyVel = nil end
     if FlyAtt then pcall(function() FlyAtt:Destroy() end) FlyAtt = nil end
+    if FlyGyro then pcall(function() FlyGyro:Destroy() end) FlyGyro = nil end
     if FlyRightShoulder then FlyRightShoulder.Transform = CFrame.new() end
     if FlyLeftShoulder then FlyLeftShoulder.Transform = CFrame.new() end
 end
@@ -371,39 +577,45 @@ Player.CharacterAdded:Connect(function(c)
     SetupFlyCharacter(c)
 end)
 
+-- Mobile-friendly fly loop using MoveDirection properly
 RunService.RenderStepped:Connect(function()
     if not FlyEnabled then return end
     if not FlyChar or not FlyHum or not FlyRoot then return end
-    if not FlyVel or not FlyVel.Parent then StartFly() end
-    local MoveDir = FlyHum.MoveDirection
-    if MoveDir.Magnitude > 0 then
-        local FlyDirection = Camera.CFrame.LookVector
-        FlyVel.VectorVelocity = FlyDirection.Unit * FlySpeed
-        FlyRoot.CFrame = CFrame.lookAt(
-            FlyRoot.Position,
-            FlyRoot.Position + FlyDirection
-        ) * CFrame.Angles(math.rad(-20), 0, 0)
+    if not FlyVel or not FlyVel.Parent then StartFly() return end
+
+    local moveDir = FlyHum.MoveDirection -- This is reliable on both mobile + PC
+
+    if moveDir.Magnitude > 0.1 then
+        -- Use camera-relative direction
+        local camCF = Camera.CFrame
+        local camFwd = Vector3.new(camCF.LookVector.X, 0, camCF.LookVector.Z)
+        if camFwd.Magnitude > 0 then camFwd = camFwd.Unit end
+        local camRight = Vector3.new(camCF.RightVector.X, 0, camCF.RightVector.Z)
+        if camRight.Magnitude > 0 then camRight = camRight.Unit end
+
+        -- moveDir is already in world space relative to camera, so just use it directly
+        local flyDir = Vector3.new(moveDir.X, 0, moveDir.Z)
+        if flyDir.Magnitude > 0 then flyDir = flyDir.Unit end
+
+        -- Add upward component when looking up
+        local upComponent = camCF.LookVector.Y
+        local finalDir = (flyDir + Vector3.new(0, upComponent * 0.7, 0))
+        if finalDir.Magnitude > 0 then finalDir = finalDir.Unit end
+
+        FlyVel.VectorVelocity = finalDir * FlySpeed
+
+        -- Smooth orientation (use AlignOrientation to prevent shake)
+        if FlyGyro then
+            local lookTarget = FlyRoot.Position + Vector3.new(flyDir.X, 0, flyDir.Z)
+            FlyGyro.CFrame = CFrame.lookAt(FlyRoot.Position, lookTarget) * CFrame.Angles(math.rad(-15), 0, 0)
+        end
     else
         FlyVel.VectorVelocity = Vector3.zero
+        if FlyGyro then
+            FlyGyro.CFrame = CFrame.lookAt(FlyRoot.Position, FlyRoot.Position + Camera.CFrame.LookVector * Vector3.new(1,0,1))
+        end
     end
 end)
-
--- ========== AUTO JUMP ==========
-local function ApplyAutoJump(on)
-    AutoJumpEnabled = on
-    if AutoJumpConn then AutoJumpConn:Disconnect() AutoJumpConn = nil end
-    if on then
-        AutoJumpConn = RunService.Heartbeat:Connect(function()
-            if Char.Humanoid then
-                pcall(function()
-                    if Char.Humanoid.FloorMaterial ~= Enum.Material.Air then
-                        Char.Humanoid.Jump = true
-                    end
-                end)
-            end
-        end)
-    end
-end
 
 -- ========== NOCLIP ==========
 local function ApplyNoclip(on)
@@ -419,7 +631,33 @@ local function ApplyNoclip(on)
             end)
         end)
     else
-        if Char.Model then
+        -- Only re-enable collide if auto tp noclip isn't active
+        if not AutoTPNoclipActive and Char.Model then
+            pcall(function()
+                for _, p in ipairs(Char.Model:GetDescendants()) do
+                    if p:IsA("BasePart") then p.CanCollide = true end
+                end
+            end)
+        end
+    end
+end
+
+-- Internal noclip for auto-tp (separate)
+local function SetAutoTPNoclip(on)
+    AutoTPNoclipActive = on
+    if AutoTPNoclipConn then AutoTPNoclipConn:Disconnect() AutoTPNoclipConn = nil end
+    if on then
+        AutoTPNoclipConn = RunService.Stepped:Connect(function()
+            if not Char.Model then return end
+            pcall(function()
+                for _, p in ipairs(Char.Model:GetDescendants()) do
+                    if p:IsA("BasePart") then p.CanCollide = false end
+                end
+            end)
+        end)
+    else
+        -- Only re-enable if main noclip is OFF
+        if not NoclipEnabled and Char.Model then
             pcall(function()
                 for _, p in ipairs(Char.Model:GetDescendants()) do
                     if p:IsA("BasePart") then p.CanCollide = true end
@@ -451,45 +689,95 @@ local function ApplyInvisible(on)
     end)
 end
 
--- ========== GOD MODE (FORCE FIELD) ==========
+-- ========== ULTIMATE GOD MODE (FF + Health Hack + Invincible) ==========
 local function ApplyGodMode(on)
     GodModeEnabled = on
+    if GodConn then GodConn:Disconnect() GodConn = nil end
     if FF_Object then pcall(function() FF_Object:Destroy() end) FF_Object = nil end
-    if on then
-        if Char.Model then
-            FF_Object = Instance.new("ForceField")
-            FF_Object.Visible = true
-            FF_Object.Parent = Char.Model
-        end
-    end
-end
 
--- ========== KILL AURA ==========
-local function ApplyKillAura(on)
-    KillAuraEnabled = on
-    if KillConn then KillConn:Disconnect() KillConn = nil end
     if on then
-        KillConn = RunService.Heartbeat:Connect(function()
-            if not Char.Root then return end
-            local myPos = Char.Root.Position
+        if not Char.Model or not Char.Humanoid then return end
+
+        -- 1. Add ForceField
+        FF_Object = Instance.new("ForceField")
+        FF_Object.Visible = true
+        FF_Object.Parent = Char.Model
+
+        -- 2. Set humanoid to invincible state
+        pcall(function()
+            Char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+            Char.Humanoid.MaxHealth = math.huge
+            Char.Humanoid.Health = math.huge
+            Char.Humanoid.BreakJointsOnDeath = false
+        end)
+
+        -- 3. Constantly maintain god mode (overrides killbricks/damage)
+        GodConn = RunService.Heartbeat:Connect(function()
+            if not Char.Humanoid or not Char.Model then return end
             pcall(function()
-                for _, obj in ipairs(workspace:GetDescendants()) do
-                    if obj:IsA("Humanoid") and obj.Health > 0 then
-                        local model = obj.Parent
-                        if not model or model == Char.Model then continue end
-                        local root = model:FindFirstChild("HumanoidRootPart")
-                            or model:FindFirstChild("Torso")
-                            or model:FindFirstChild("UpperTorso")
-                        if root then
-                            if (root.Position - myPos).Magnitude <= 20 then
-                                pcall(function() obj.Health = 0 end)
-                                pcall(function() obj:TakeDamage(9999999) end)
-                            end
-                        end
-                    end
+                Char.Humanoid.Health = math.huge
+                Char.Humanoid.MaxHealth = math.huge
+                Char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+                -- Re-add forcefield if removed
+                if not Char.Model:FindFirstChildOfClass("ForceField") then
+                    FF_Object = Instance.new("ForceField")
+                    FF_Object.Visible = true
+                    FF_Object.Parent = Char.Model
+                end
+                -- Prevent humanoid death state
+                if Char.Humanoid:GetState() == Enum.HumanoidStateType.Dead then
+                    Char.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
                 end
             end)
         end)
+    else
+        pcall(function()
+            if Char.Humanoid then
+                Char.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+                Char.Humanoid.MaxHealth = 100
+                Char.Humanoid.Health = 100
+                Char.Humanoid.BreakJointsOnDeath = true
+            end
+        end)
+    end
+end
+
+-- ========== NO GRAVITY ==========
+local function ApplyNoGravity(on)
+    NoGravityEnabled = on
+    if on then
+        Workspace.Gravity = 0
+    else
+        Workspace.Gravity = OrigGravity
+    end
+end
+
+-- ========== ANTI KICK ==========
+local AntiKickHooked = false
+local OldNamecall = nil
+local function ApplyAntiKick(on)
+    AntiKickEnabled = on
+    if on and not AntiKickHooked then
+        local success = pcall(function()
+            if hookmetamethod then
+                OldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+                    local method = getnamecallmethod()
+                    if AntiKickEnabled and self == Player then
+                        if method == "Kick" then
+                            return nil
+                        end
+                    end
+                    return OldNamecall(self, ...)
+                end)
+                AntiKickHooked = true
+            end
+        end)
+        if success and AntiKickHooked then
+            ShowNotice("Anti-Kick", "Hook installed - immune to Player:Kick()", Color3.fromRGB(80,255,120))
+        else
+            ShowNotice("Anti-Kick", "Failed - exploit not supported", Color3.fromRGB(255,80,80))
+            AntiKickEnabled = false
+        end
     end
 end
 
@@ -527,18 +815,12 @@ local function ApplyFullBright(on)
     end
 end
 
--- ========== FPS BOOST (ULTRA LOW 380P) ==========
+-- ========== FPS BOOST (ULTRA LOW) ==========
 local FPSBoostedItems = {}
 local function ApplyFPSBoost(on)
     FPSBoostEnabled = on
     if on then
-        pcall(function()
-            settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-        end)
-        pcall(function()
-            sethiddenproperty(Lighting, "Technology", Enum.Technology.Compatibility)
-        end)
-        -- Massive quality drop
+        pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
         pcall(function()
             for _, v in ipairs(workspace:GetDescendants()) do
                 if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") or v:IsA("Explosion") or v:IsA("Beam") then
@@ -546,24 +828,15 @@ local function ApplyFPSBoost(on)
                     table.insert(FPSBoostedItems, v)
                 end
                 if v:IsA("MeshPart") or v:IsA("Part") then
-                    if v.Material == Enum.Material.Glass then
-                        v.Material = Enum.Material.Plastic
-                    end
+                    if v.Material == Enum.Material.Glass then v.Material = Enum.Material.Plastic end
                     v.CastShadow = false
-                    if v:FindFirstChildOfClass("Decal") then
-                        for _, d in ipairs(v:GetChildren()) do
-                            if d:IsA("Decal") or d:IsA("Texture") then
-                                d.Transparency = 1
-                            end
-                        end
+                    for _, d in ipairs(v:GetChildren()) do
+                        if d:IsA("Decal") or d:IsA("Texture") then d.Transparency = 1 end
                     end
                 end
-                if v:IsA("SurfaceLight") or v:IsA("PointLight") or v:IsA("SpotLight") then
-                    v.Enabled = false
-                end
+                if v:IsA("SurfaceLight") or v:IsA("PointLight") or v:IsA("SpotLight") then v.Enabled = false end
             end
         end)
-        -- Disable post effects
         for _, v in ipairs(Lighting:GetChildren()) do
             pcall(function()
                 if v:IsA("BlurEffect") or v:IsA("BloomEffect") or v:IsA("SunRaysEffect") or v:IsA("DepthOfFieldEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("Atmosphere") then
@@ -571,7 +844,6 @@ local function ApplyFPSBoost(on)
                 end
             end)
         end
-        -- Force terrain to lowest
         pcall(function()
             workspace.Terrain.WaterWaveSize = 0
             workspace.Terrain.WaterWaveSpeed = 0
@@ -580,14 +852,10 @@ local function ApplyFPSBoost(on)
         end)
         Lighting.GlobalShadows = false
         Lighting.FogEnd = 200
-        ShowNotice("FPS Boost", "Ultra-low quality (380p style) activated!", Color3.fromRGB(255,80,80), 3)
+        ShowNotice("FPS Boost", "Ultra-low quality activated!", Color3.fromRGB(255,80,80), 3)
     else
-        pcall(function()
-            settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
-        end)
-        for _, v in ipairs(FPSBoostedItems) do
-            pcall(function() v.Enabled = true end)
-        end
+        pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic end)
+        for _, v in ipairs(FPSBoostedItems) do pcall(function() v.Enabled = true end) end
         FPSBoostedItems = {}
         Lighting.GlobalShadows = true
         Lighting.FogEnd = OrigLight.FogEnd
@@ -609,9 +877,7 @@ local function TeleportTo(target)
     end
     local tRoot = target.Character:FindFirstChild("HumanoidRootPart")
     if not tRoot or not Char.Root then return end
-    pcall(function()
-        Char.Root.CFrame = tRoot.CFrame + Vector3.new(0, 3, 0)
-    end)
+    pcall(function() Char.Root.CFrame = tRoot.CFrame + Vector3.new(0, 3, 0) end)
     ShowNotice("Teleported", "Jumped to "..target.Name, Color3.fromRGB(0,200,100))
 end
 
@@ -631,9 +897,7 @@ local function StartSpectate(target)
             return
         end
         local r = SpectatingTarget.Character:FindFirstChild("HumanoidRootPart")
-        if r then
-            Camera.CFrame = CFrame.new(r.Position + Vector3.new(0,5,10), r.Position)
-        end
+        if r then Camera.CFrame = CFrame.new(r.Position + Vector3.new(0,5,10), r.Position) end
     end)
     ShowNotice("Spectating", "Watching: "..target.Name, Color3.fromRGB(120,80,255))
 end
@@ -646,7 +910,6 @@ local function StopSpectate()
     ShowNotice("Spectate", "Stopped", Color3.fromRGB(120,80,255))
 end
 
--- ========== REJOIN ==========
 local function RejoinServer()
     ShowNotice("Rejoin", "Rejoining server...", Color3.fromRGB(0,200,255), 2)
     task.wait(0.5)
@@ -655,7 +918,7 @@ local function RejoinServer()
     end)
 end
 
--- ========== WALL CHECK ==========
+-- ========== WALL CHECK / AIM HELPERS ==========
 local function HasWall(tRoot)
     if not Char.Root or not tRoot then return false end
     local origin = Char.Root.Position
@@ -676,7 +939,6 @@ local function HasWall(tRoot)
     return false
 end
 
--- ========== AIM HELPERS ==========
 local function IsPlayerBehindMe(target)
     if not Char.Root or not target.Character then return false end
     local tRoot = target.Character:FindFirstChild("HumanoidRootPart")
@@ -702,7 +964,22 @@ local function GetClosestEnemy()
     return closest
 end
 
--- ========== SMART TP ==========
+local function GetRandomEnemy()
+    local valid = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p == Player then continue end
+        if not p.Character then continue end
+        local r = p.Character:FindFirstChild("HumanoidRootPart")
+        local h = p.Character:FindFirstChild("Humanoid")
+        if r and h and h.Health > 0 then
+            table.insert(valid, p)
+        end
+    end
+    if #valid == 0 then return nil end
+    return valid[math.random(1, #valid)]
+end
+
+-- ========== SMART TP (with safe distance above target) ==========
 local function ApplySmartTP(on)
     SmartTPEnabled = on
     if SmartTPConn then SmartTPConn:Disconnect() SmartTPConn = nil end
@@ -716,15 +993,62 @@ local function ApplySmartTP(on)
             if not target or not target.Character then return end
             local tRoot = target.Character:FindFirstChild("HumanoidRootPart")
             if not tRoot then return end
+
+            -- Position ABOVE and slightly BEHIND target (safe from first-person aim)
             local targetLook = tRoot.CFrame.LookVector
-            local behindOffset = -targetLook * 3
-            local tpPos = tRoot.Position + behindOffset + Vector3.new(0, 0.5, 0)
+            local behindOffset = -targetLook * 4 -- behind
+            local upOffset = Vector3.new(0, TP_DISTANCE, 0) -- safe height above
+            local tpPos = tRoot.Position + behindOffset + upOffset
+
             pcall(function()
                 Char.Root.CFrame = CFrame.new(tpPos, tRoot.Position)
             end)
             lastTPTime = now
         end)
-        ShowNotice("Smart TP", "Activated! Will TP behind enemies.", Color3.fromRGB(255,200,0))
+        ShowNotice("Smart TP", "Active - safe distance above target", Color3.fromRGB(255,200,0))
+    end
+end
+
+-- ========== AUTO TP (independent from Aim) ==========
+local function ApplyAutoTP(on)
+    AutoTPEnabled = on
+    if AutoTPConn then AutoTPConn:Disconnect() AutoTPConn = nil end
+    if on then
+        -- Enable internal noclip + floating
+        SetAutoTPNoclip(true)
+        AutoTPConn = RunService.Heartbeat:Connect(function()
+            if not AutoTPEnabled then return end
+            if not Char.Root or not Char.Humanoid then return end
+            local now = tick()
+            if now - lastAutoTPTime < TP_COOLDOWN then return end
+
+            local target
+            if AutoTPMode == "Closest" then
+                target = GetClosestEnemy()
+            else
+                target = GetRandomEnemy()
+            end
+
+            if not target or not target.Character then return end
+            local tRoot = target.Character:FindFirstChild("HumanoidRootPart")
+            if not tRoot then return end
+
+            -- Float above target at safe distance
+            local upOffset = Vector3.new(0, TP_DISTANCE, 0)
+            local tpPos = tRoot.Position + upOffset
+
+            pcall(function()
+                Char.Root.CFrame = CFrame.new(tpPos, tRoot.Position)
+                -- Float: zero velocity
+                Char.Root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            end)
+            lastAutoTPTime = now
+        end)
+        ShowNotice("Auto TP", "Active ["..AutoTPMode.."] - floating + noclip", Color3.fromRGB(0,255,180))
+    else
+        -- Disable only the auto-tp noclip, NOT manual noclip
+        SetAutoTPNoclip(false)
+        ShowNotice("Auto TP", "Disabled", Color3.fromRGB(200,200,200))
     end
 end
 
@@ -754,39 +1078,6 @@ local function StartBehindDetection()
     end)
 end
 
--- ========== PHANTOM BULLET (AIM NOCLIP) ==========
--- Hooks: redirects bullet origins to enemy position when aiming at them
-local function ApplyPhantomBullet(on)
-    PhantomBulletEnabled = on
-    if PhantomConn then PhantomConn:Disconnect() PhantomConn = nil end
-    if on then
-        -- Modify camera offset slightly to "snap" aim to enemy when within reticle
-        PhantomConn = RunService.RenderStepped:Connect(function()
-            if not PhantomBulletEnabled then return end
-            if not Char.Root then return end
-            local target = GetClosestEnemy()
-            if not target or not target.Character then return end
-            local tRoot = target.Character:FindFirstChild("Head") or target.Character:FindFirstChild("HumanoidRootPart")
-            if not tRoot then return end
-            -- Check if target is roughly in front (within reticle area)
-            local screenPos, onScreen = Camera:WorldToScreenPoint(tRoot.Position)
-            if not onScreen then return end
-            local center = Camera.ViewportSize / 2
-            local dx = screenPos.X - center.X
-            local dy = screenPos.Y - center.Y
-            local dist = math.sqrt(dx*dx + dy*dy)
-            -- If reticle is close to target (within 100 pixels), snap aim to bypass walls
-            if dist < 100 then
-                local dir = (tRoot.Position - Camera.CFrame.Position).Unit
-                pcall(function()
-                    Camera.CFrame = CFrame.new(Camera.CFrame.Position, Camera.CFrame.Position + dir)
-                end)
-            end
-        end)
-        ShowNotice("Phantom Bullet", "Bullets snap to enemies through walls!", Color3.fromRGB(180,50,255), 4)
-    end
-end
-
 -- ========== ESP ==========
 local function DestroyESP(target)
     if not ESPObjects[target] then return end
@@ -798,9 +1089,7 @@ local function DestroyESP(target)
     ESPObjects[target] = nil
 end
 
-local function ClearESP()
-    for t in pairs(ESPObjects) do DestroyESP(t) end
-end
+local function ClearESP() for t in pairs(ESPObjects) do DestroyESP(t) end end
 
 local function BuildESP(target)
     if ESPObjects[target] then return end
@@ -1069,7 +1358,7 @@ local function UpdateAim()
     end
 end
 
--- ========== FPS COUNTER (RedMagic style) ==========
+-- ========== FPS COUNTER (with enable/disable) ==========
 local FPSGui = Instance.new("ScreenGui")
 FPSGui.Name = "UACFPS"
 FPSGui.ResetOnSpawn = false
@@ -1115,18 +1404,20 @@ FPSText.TextSize = 12
 FPSText.TextXAlignment = Enum.TextXAlignment.Left
 FPSText.Parent = FPSFrame
 
--- FPS calc
 local frames = 0
 local lastTime = tick()
+local currentFPS = 60
 RunService.RenderStepped:Connect(function()
     frames = frames + 1
     local now = tick()
     if now - lastTime >= 0.5 then
-        local fps = math.floor(frames / (now - lastTime))
-        FPSText.Text = "FPS: "..fps
-        if fps >= 50 then FPSText.TextColor3 = Color3.fromRGB(80,255,120)
-        elseif fps >= 30 then FPSText.TextColor3 = Color3.fromRGB(255,220,80)
-        else FPSText.TextColor3 = Color3.fromRGB(255,80,80) end
+        currentFPS = math.floor(frames / (now - lastTime))
+        if FPSCounterEnabled then
+            FPSText.Text = "FPS: "..currentFPS
+            if currentFPS >= 50 then FPSText.TextColor3 = Color3.fromRGB(80,255,120)
+            elseif currentFPS >= 30 then FPSText.TextColor3 = Color3.fromRGB(255,220,80)
+            else FPSText.TextColor3 = Color3.fromRGB(255,80,80) end
+        end
         frames = 0
         lastTime = now
     end
@@ -1142,10 +1433,9 @@ GUI.Parent = PlayerGui
 
 local screenSize = workspace.CurrentCamera.ViewportSize
 local isMobile = screenSize.X < 800
-local PANEL_W = isMobile and 320 or 560
-local PANEL_H = isMobile and 420 or 470
+local PANEL_W = isMobile and 320 or 580
+local PANEL_H = isMobile and 440 or 480
 
--- ========== MAIN PANEL ==========
 local Panel = Instance.new("Frame")
 Panel.Name = "MainPanel"
 Panel.Size = UDim2.new(0, PANEL_W, 0, 0)
@@ -1166,7 +1456,6 @@ do
         ColorSequenceKeypoint.new(1, Color3.fromRGB(0,140,255)),
     })
     sg.Rotation = 135 sg.Parent = s
-    -- Animated stroke
     task.spawn(function()
         local rot = 135
         while Panel.Parent do
@@ -1177,7 +1466,6 @@ do
     end)
 end
 
--- LEFT SIDEBAR (Fluent-style)
 local SIDEBAR_W = isMobile and 100 or 140
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
@@ -1197,7 +1485,6 @@ do
     fix.Parent = Sidebar
 end
 
--- Logo / Brand
 local Brand = Instance.new("Frame")
 Brand.Size = UDim2.new(1, -16, 0, 70)
 Brand.Position = UDim2.new(0, 8, 0, 12)
@@ -1251,7 +1538,6 @@ do
     g.Parent = BrandLine
 end
 
--- Tab list
 local TabListFrame = Instance.new("ScrollingFrame")
 TabListFrame.Size = UDim2.new(1, -8, 1, -100)
 TabListFrame.Position = UDim2.new(0, 4, 0, 90)
@@ -1273,7 +1559,6 @@ do
     p.Parent = TabListFrame
 end
 
--- TOP BAR (Right side)
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, -SIDEBAR_W - 10, 0, 44)
 TopBar.Position = UDim2.new(0, SIDEBAR_W + 5, 0, 6)
@@ -1291,7 +1576,7 @@ local TopTitle = Instance.new("TextLabel")
 TopTitle.Size = UDim2.new(1, -80, 1, 0)
 TopTitle.Position = UDim2.new(0, 14, 0, 0)
 TopTitle.BackgroundTransparency = 1
-TopTitle.Text = "🎯 Aim"
+TopTitle.Text = "👤 Profile"
 TopTitle.TextColor3 = Color3.fromRGB(255,255,255)
 TopTitle.Font = Enum.Font.GothamBold
 TopTitle.TextSize = 15
@@ -1313,7 +1598,6 @@ PHClose.ZIndex = 110
 PHClose.Parent = TopBar
 do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0,6) c.Parent = PHClose end
 
--- CONTENT
 local Content = Instance.new("Frame")
 Content.Size = UDim2.new(1, -SIDEBAR_W - 10, 1, -60)
 Content.Position = UDim2.new(0, SIDEBAR_W + 5, 0, 54)
@@ -1327,6 +1611,7 @@ local Tabs = {}
 local TabDefs = {
     {key="Profile", name="Profile", icon="👤"},
     {key="Combat", name="Aim", icon="🎯"},
+    {key="AutoTP", name="AutoTP", icon="⚡"},
     {key="Visuals", name="Vision", icon="👁"},
     {key="Movement", name="Motion", icon="✈"},
     {key="Player", name="Shield", icon="🛡"},
@@ -1352,10 +1637,8 @@ local function CreateScroll(parent)
     l.SortOrder = Enum.SortOrder.LayoutOrder
     l.Parent = sc
     local p = Instance.new("UIPadding")
-    p.PaddingTop = UDim.new(0,4)
-    p.PaddingBottom = UDim.new(0,8)
-    p.PaddingLeft = UDim.new(0,4)
-    p.PaddingRight = UDim.new(0,8)
+    p.PaddingTop = UDim.new(0,4) p.PaddingBottom = UDim.new(0,8)
+    p.PaddingLeft = UDim.new(0,4) p.PaddingRight = UDim.new(0,8)
     p.Parent = sc
     return sc
 end
@@ -1380,7 +1663,7 @@ end
 
 for i, def in ipairs(TabDefs) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.Size = UDim2.new(1, 0, 0, 36)
     btn.BackgroundColor3 = Color3.fromRGB(18,18,28)
     btn.Text = ""
     btn.BorderSizePixel = 0
@@ -1390,7 +1673,6 @@ for i, def in ipairs(TabDefs) do
     btn.Parent = TabListFrame
     local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0,6) c.Parent = btn
 
-    -- Left accent indicator (Fluent style)
     local indicator = Instance.new("Frame")
     indicator.Size = UDim2.new(0, 3, 0.6, 0)
     indicator.Position = UDim2.new(0, 0, 0.2, 0)
@@ -1405,8 +1687,7 @@ for i, def in ipairs(TabDefs) do
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255,40,80)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(0,180,255)),
     })
-    ig.Rotation = 90
-    ig.Parent = indicator
+    ig.Rotation = 90 ig.Parent = indicator
 
     local icon = Instance.new("TextLabel")
     icon.Size = UDim2.new(0, 24, 1, 0)
@@ -1666,8 +1947,113 @@ local function Btn(parent, name, desc, accent, cb)
     btn.ZIndex = 104
     btn.Parent = card
     do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0,6) c.Parent = btn end
+    btn.MouseButton1Click:Connect(function() if cb then cb() end end)
+end
+
+local function Dropdown(parent, name, desc, options, default, cb)
+    local current = default or options[1]
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1,0,0,48)
+    card.BackgroundColor3 = Color3.fromRGB(18,18,28)
+    card.BorderSizePixel = 0
+    card.ZIndex = 102
+    card.ClipsDescendants = false
+    card.Parent = parent
+    do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0,8) c.Parent = card end
+    local stk = Instance.new("UIStroke") stk.Color = Color3.fromRGB(36,36,55) stk.Thickness = 1 stk.Parent = card
+    local nL = Instance.new("TextLabel")
+    nL.Size = UDim2.new(1,-110,0,18)
+    nL.Position = UDim2.new(0,12,0,7)
+    nL.BackgroundTransparency = 1
+    nL.Text = name
+    nL.TextColor3 = Color3.fromRGB(235,235,250)
+    nL.Font = Enum.Font.GothamBold
+    nL.TextSize = 12
+    nL.TextXAlignment = Enum.TextXAlignment.Left
+    nL.ZIndex = 103
+    nL.Parent = card
+    local dL = Instance.new("TextLabel")
+    dL.Size = UDim2.new(1,-110,0,14)
+    dL.Position = UDim2.new(0,12,0,26)
+    dL.BackgroundTransparency = 1
+    dL.Text = desc
+    dL.TextColor3 = Color3.fromRGB(110,110,140)
+    dL.Font = Enum.Font.Gotham
+    dL.TextSize = 9
+    dL.TextXAlignment = Enum.TextXAlignment.Left
+    dL.ZIndex = 103
+    dL.Parent = card
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0,90,0,28)
+    btn.Position = UDim2.new(1,-98,0.5,-14)
+    btn.BackgroundColor3 = Color3.fromRGB(0,120,220)
+    btn.Text = current.." ▼"
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 11
+    btn.BorderSizePixel = 0
+    btn.ZIndex = 104
+    btn.Parent = card
+    do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0,6) c.Parent = btn end
+    local dropdown = Instance.new("Frame")
+    dropdown.Size = UDim2.new(0, 120, 0, 0)
+    dropdown.BackgroundColor3 = Color3.fromRGB(12,12,22)
+    dropdown.BorderSizePixel = 0
+    dropdown.ZIndex = 500
+    dropdown.Visible = false
+    dropdown.Parent = GUI
+    do
+        local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0,6) c.Parent = dropdown
+        local s = Instance.new("UIStroke") s.Color = Color3.fromRGB(70,70,140) s.Thickness = 1 s.Parent = dropdown
+        local l = Instance.new("UIListLayout") l.Padding = UDim.new(0,2) l.Parent = dropdown
+        local p = Instance.new("UIPadding")
+        p.PaddingLeft = UDim.new(0,3) p.PaddingRight = UDim.new(0,3)
+        p.PaddingTop = UDim.new(0,3) p.PaddingBottom = UDim.new(0,3)
+        p.Parent = dropdown
+    end
+    local isOpen = false
+    local function Close()
+        isOpen = false
+        dropdown.Visible = false
+        btn.Text = current.." ▼"
+    end
     btn.MouseButton1Click:Connect(function()
-        if cb then cb() end
+        isOpen = not isOpen
+        if isOpen then
+            for _, v in ipairs(dropdown:GetChildren()) do
+                if v:IsA("TextButton") then v:Destroy() end
+            end
+            local count = 0
+            for _, opt in ipairs(options) do
+                count = count + 1
+                local ob = Instance.new("TextButton")
+                ob.Size = UDim2.new(1,0,0,26)
+                ob.BackgroundColor3 = Color3.fromRGB(22,22,40)
+                ob.Text = opt
+                ob.TextColor3 = Color3.fromRGB(220,220,255)
+                ob.Font = Enum.Font.GothamBold
+                ob.TextSize = 11
+                ob.BorderSizePixel = 0
+                ob.ZIndex = 501
+                ob.LayoutOrder = count
+                ob.Parent = dropdown
+                do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0,4) c.Parent = ob end
+                ob.MouseButton1Click:Connect(function()
+                    current = opt
+                    Close()
+                    if cb then cb(opt) end
+                end)
+            end
+            local h = count * 28 + 8
+            dropdown.Size = UDim2.new(0,120,0,h)
+            local absPos = btn.AbsolutePosition
+            local absSize = btn.AbsoluteSize
+            dropdown.Position = UDim2.new(0, absPos.X - 30, 0, absPos.Y + absSize.Y + 4)
+            dropdown.Visible = true
+            btn.Text = current.." ▲"
+        else
+            Close()
+        end
     end)
 end
 
@@ -1737,9 +2123,7 @@ local function PlayerDropdown(parent, title, desc, accent, onSelect)
         sc.AutomaticCanvasSize = Enum.AutomaticSize.Y
         sc.ZIndex = 501
         sc.Parent = dropdown
-        local l = Instance.new("UIListLayout")
-        l.Padding = UDim.new(0,2)
-        l.Parent = sc
+        local l = Instance.new("UIListLayout") l.Padding = UDim.new(0,2) l.Parent = sc
         local p = Instance.new("UIPadding")
         p.PaddingLeft = UDim.new(0,4) p.PaddingRight = UDim.new(0,4)
         p.PaddingTop = UDim.new(0,4) p.PaddingBottom = UDim.new(0,4)
@@ -1748,8 +2132,7 @@ local function PlayerDropdown(parent, title, desc, accent, onSelect)
     local isOpen = false
     local function CloseDropdown() isOpen = false dropdown.Visible = false openBtn.Text = "▼" end
     local function OpenDropdown()
-        isOpen = true
-        openBtn.Text = "▲"
+        isOpen = true openBtn.Text = "▲"
         local absPos = container.AbsolutePosition
         local absSize = container.AbsoluteSize
         dropdown.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 4)
@@ -1819,11 +2202,9 @@ do
         ColorSequenceKeypoint.new(0, Color3.fromRGB(220,30,30)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(0,160,255)),
     })
-    sg.Rotation = 135
-    sg.Parent = s
+    sg.Rotation = 135 sg.Parent = s
 end
 
--- Avatar circle
 local AvatarFrame = Instance.new("Frame")
 AvatarFrame.Size = UDim2.new(0,80,0,80)
 AvatarFrame.Position = UDim2.new(0,16,0,14)
@@ -1839,8 +2220,7 @@ do
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255,60,60)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(0,200,255)),
     })
-    sg.Rotation = 45
-    sg.Parent = s
+    sg.Rotation = 45 sg.Parent = s
 end
 
 local AvatarImg = Instance.new("ImageLabel")
@@ -1850,12 +2230,10 @@ AvatarImg.BackgroundTransparency = 1
 AvatarImg.ZIndex = 104
 AvatarImg.Parent = AvatarFrame
 do local c = Instance.new("UICorner") c.CornerRadius = UDim.new(1,0) c.Parent = AvatarImg end
-
 pcall(function()
     AvatarImg.Image = Players:GetUserThumbnailAsync(Player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
 end)
 
--- Online dot
 local OnlineDot = Instance.new("Frame")
 OnlineDot.Size = UDim2.new(0,14,0,14)
 OnlineDot.Position = UDim2.new(1,-16,1,-16)
@@ -1868,7 +2246,6 @@ do
     local s = Instance.new("UIStroke") s.Thickness = 2 s.Color = Color3.fromRGB(18,18,28) s.Parent = OnlineDot
 end
 
--- Codename
 local CodeNameLbl = Instance.new("TextLabel")
 CodeNameLbl.Size = UDim2.new(1,-110,0,18)
 CodeNameLbl.Position = UDim2.new(0,106,0,14)
@@ -1917,7 +2294,6 @@ StatusLbl.TextXAlignment = Enum.TextXAlignment.Left
 StatusLbl.ZIndex = 103
 StatusLbl.Parent = ProfCard
 
--- Stats grid
 local function MakeStatRow(parent, y, label, value, color)
     local f = Instance.new("Frame")
     f.Size = UDim2.new(1,-32,0,18)
@@ -1953,20 +2329,20 @@ local PlayingLbl = MakeStatRow(ProfCard, -52, "🎮 Playing:", GAME_NAME, Color3
 local FPSStatLbl = MakeStatRow(ProfCard, -34, "⚡ FPS:", "60", Color3.fromRGB(80,255,120))
 local DeviceLbl = MakeStatRow(ProfCard, -16, "💻 Device:", GetDevice(Player), Color3.fromRGB(255,180,80))
 
--- Live FPS update on profile
 task.spawn(function()
     while true do
         task.wait(1)
         if FPSStatLbl and FPSStatLbl.Parent then
-            local fps = tonumber(FPSText.Text:match("%d+")) or 60
-            FPSStatLbl.Text = tostring(fps)
+            FPSStatLbl.Text = tostring(currentFPS)
         end
     end
 end)
 
 Section(ProfTab, "QUICK ACTIONS")
-Btn(ProfTab, "Rejoin Server", "Reconnect to the same server", Color3.fromRGB(0,180,255), function()
-    RejoinServer()
+Btn(ProfTab, "Rejoin Server", "Reconnect to the same server", Color3.fromRGB(0,180,255), function() RejoinServer() end)
+Tog(ProfTab, "FPS Counter", "Toggle FPS overlay (top-right)", true, function(v)
+    FPSCounterEnabled = v
+    FPSGui.Enabled = v
 end)
 
 Section(ProfTab, "ACCOUNT INFO")
@@ -1981,7 +2357,7 @@ do local s = Instance.new("UIStroke") s.Color = Color3.fromRGB(36,36,55) s.Thick
 
 MakeStatRow(InfoCard, -82, "User ID:", tostring(Player.UserId), Color3.fromRGB(0,200,255))
 MakeStatRow(InfoCard, -62, "Account Age:", Player.AccountAge.." days", Color3.fromRGB(180,220,255))
-MakeStatRow(InfoCard, -42, "Ping:", "--", Color3.fromRGB(220,220,250))
+MakeStatRow(InfoCard, -42, "Server Players:", #Players:GetPlayers().."/"..Players.MaxPlayers, Color3.fromRGB(220,220,250))
 MakeStatRow(InfoCard, -22, "Job ID:", string.sub(game.JobId, 1, 16).."...", Color3.fromRGB(180,180,220))
 
 -- ========== AIM TAB ==========
@@ -2016,7 +2392,7 @@ setSmartRef = Tog(AimTab, "Smart Aim", "Lock camera to closest enemy", false, fu
 end)
 
 local setSmartTPRef
-setSmartTPRef = Tog(AimTab, "Smart TP", "Teleport behind closest enemy", false, function(v)
+setSmartTPRef = Tog(AimTab, "Smart TP", "TP safely above & behind enemy", false, function(v)
     if not AimbotEnabled and v then
         task.spawn(function() task.wait() setSmartTPRef(false) end)
         ShowNotice("Smart TP", "Enable Aimbot first!", Color3.fromRGB(255,150,0))
@@ -2025,19 +2401,32 @@ setSmartTPRef = Tog(AimTab, "Smart TP", "Teleport behind closest enemy", false, 
     ApplySmartTP(v)
 end)
 
-Sld(AimTab, "TP Cooldown (0.1s)", 1, 30, 5, function(v)
-    TP_COOLDOWN = v / 10
-end)
+Sld(AimTab, "TP Cooldown (0.1s)", 1, 30, 5, function(v) TP_COOLDOWN = v / 10 end)
+Sld(AimTab, "TP Safe Distance", 5, 30, 12, function(v) TP_DISTANCE = v end)
 
-Section(AimTab, "ADVANCED")
-Tog(AimTab, "Phantom Bullet", "Bullets pierce walls / snap to enemy (Aim Noclip)", false, function(v)
-    ApplyPhantomBullet(v)
+-- ========== AUTO TP TAB ==========
+local AtpTab = Tabs.AutoTP.scroll
+Section(AtpTab, "AUTO TELEPORT")
+Tog(AtpTab, "Auto TP", "Auto-teleport above target (floating + noclip)", false, function(v)
+    ApplyAutoTP(v)
 end)
+Dropdown(AtpTab, "Target Mode", "Closest = nearest player, Random = any player", {"Closest", "Random"}, "Closest", function(opt)
+    AutoTPMode = opt
+    ShowNotice("Auto TP", "Mode set to: "..opt, Color3.fromRGB(0,200,255))
+end)
+Sld(AtpTab, "Distance Above Target", 5, 30, 12, function(v) TP_DISTANCE = v end)
+Sld(AtpTab, "TP Cooldown (0.1s)", 1, 30, 5, function(v) TP_COOLDOWN = v / 10 end)
 
-Tog(AimTab, "Kill Aura", "Kill humanoids within 20 studs", false, function(v)
-    ApplyKillAura(v)
-    if v then ShowNotice("Kill Aura", "Not 100% on all games", Color3.fromRGB(255,180,0), 4) end
-end)
+local atpInfo = Instance.new("TextLabel")
+atpInfo.Size = UDim2.new(1,0,0,50)
+atpInfo.BackgroundTransparency = 1
+atpInfo.Text = "ℹ Auto TP works without Aimbot.\nIt enables noclip + float automatically.\nDisabling it restores collision.\nManual Noclip toggle is independent."
+atpInfo.TextColor3 = Color3.fromRGB(120,120,160)
+atpInfo.Font = Enum.Font.Gotham
+atpInfo.TextSize = 10
+atpInfo.TextWrapped = true
+atpInfo.ZIndex = 102
+atpInfo.Parent = AtpTab
 
 -- ========== VISION TAB ==========
 local VisTab = Tabs.Visuals.scroll
@@ -2055,7 +2444,7 @@ Tog(VisTab, "Full Bright", "Max brightness, no shadows", false, function(v) Appl
 -- ========== MOTION TAB ==========
 local MotTab = Tabs.Movement.scroll
 Section(MotTab, "FLIGHT")
-Tog(MotTab, "Fly Mode", "Hold WASD to fly forward (Superman style)", false, function(v)
+Tog(MotTab, "Fly Mode", "Mobile + PC friendly (stable, no shake)", false, function(v)
     FlyEnabled = v
     if not v then StopFly() end
 end)
@@ -2070,17 +2459,18 @@ Sld(MotTab, "Jump Power", 50, 500, 50, function(v)
     JumpPower = v
     if Char.Humanoid then pcall(function() Char.Humanoid.JumpPower = v end) end
 end)
-Tog(MotTab, "Auto Jump", "Auto-jump while on ground", false, function(v)
-    ApplyAutoJump(v)
-end)
-Tog(MotTab, "Noclip", "Walk through walls", false, function(v) ApplyNoclip(v) end)
+Tog(MotTab, "Noclip", "Walk through walls (manual)", false, function(v) ApplyNoclip(v) end)
+Tog(MotTab, "No Gravity", "Disable world gravity", false, function(v) ApplyNoGravity(v) end)
 
 -- ========== SHIELD TAB ==========
 local PlyTab = Tabs.Player.scroll
 Section(PlyTab, "PROTECTION")
-Tog(PlyTab, "God Mode (FF)", "Force-field based god mode", false, function(v)
+Tog(PlyTab, "God Mode", "ForceField + invincible (immune to killbricks, guns, 0 HP)", false, function(v)
     ApplyGodMode(v)
-    if v then ShowNotice("God Mode", "ForceField applied - not 100% on all games", Color3.fromRGB(255,180,0), 4) end
+    if v then ShowNotice("God Mode", "Total invincibility active", Color3.fromRGB(80,255,120), 4) end
+end)
+Tog(PlyTab, "Anti-Kick", "Block Player:Kick() server calls", false, function(v)
+    ApplyAntiKick(v)
 end)
 
 -- ========== TOOLS TAB ==========
@@ -2096,19 +2486,17 @@ Btn(UtlTab, "Stop Spectating", "Return camera to yourself", Color3.fromRGB(180,4
     StopSpectate()
 end)
 Section(UtlTab, "SERVER")
-Btn(UtlTab, "Rejoin Server", "Reconnect to current server", Color3.fromRGB(0,180,255), function()
-    RejoinServer()
-end)
+Btn(UtlTab, "Rejoin Server", "Reconnect to current server", Color3.fromRGB(0,180,255), function() RejoinServer() end)
 
 -- ========== WORLD TAB ==========
 local WrlTab = Tabs.World.scroll
 Section(WrlTab, "PERFORMANCE")
-Tog(WrlTab, "FPS Boost (380p)", "Ultra-low quality, removes effects, shadows, lights", false, function(v) ApplyFPSBoost(v) end)
+Tog(WrlTab, "FPS Boost (380p)", "Ultra-low quality, removes effects, shadows", false, function(v) ApplyFPSBoost(v) end)
 
 local tipL = Instance.new("TextLabel")
 tipL.Size = UDim2.new(1,0,0,32)
 tipL.BackgroundTransparency = 1
-tipL.Text = "⚠ Enable Aimbot before Smart Aim / TP / Phantom Bullet\nUniversal Aim Core v1"
+tipL.Text = "⚠ Enable Aimbot before Smart Aim / Smart TP\nUniversal Aim Core v1"
 tipL.TextColor3 = Color3.fromRGB(80,80,130)
 tipL.Font = Enum.Font.Gotham
 tipL.TextSize = 10
@@ -2116,7 +2504,7 @@ tipL.TextWrapped = true
 tipL.ZIndex = 102
 tipL.Parent = WrlTab
 
--- ========== SERVER TAB (Player list) ==========
+-- ========== SERVER TAB ==========
 local SrvTab = Tabs.Server.scroll
 
 local ServerInfoCard = Instance.new("Frame")
@@ -2158,7 +2546,7 @@ local SrvPing = Instance.new("TextLabel")
 SrvPing.Size = UDim2.new(1,-20,0,14)
 SrvPing.Position = UDim2.new(0,12,0,46)
 SrvPing.BackgroundTransparency = 1
-SrvPing.Text = "Server FPS: -- | Region: --"
+SrvPing.Text = "Ping: --"
 SrvPing.TextColor3 = Color3.fromRGB(160,160,200)
 SrvPing.Font = Enum.Font.Gotham
 SrvPing.TextSize = 10
@@ -2195,7 +2583,6 @@ local function CreatePlayerCard(plr)
         local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0,8) c.Parent = card
         local s = Instance.new("UIStroke") s.Color = Color3.fromRGB(36,36,55) s.Thickness = 1 s.Parent = card
     end
-    -- Avatar
     local avFrame = Instance.new("Frame")
     avFrame.Size = UDim2.new(0,40,0,40)
     avFrame.Position = UDim2.new(0,8,0,8)
@@ -2211,8 +2598,7 @@ local function CreatePlayerCard(plr)
             ColorSequenceKeypoint.new(0, Color3.fromRGB(255,60,60)),
             ColorSequenceKeypoint.new(1, Color3.fromRGB(0,200,255)),
         })
-        sg.Rotation = 45
-        sg.Parent = s
+        sg.Rotation = 45 sg.Parent = s
     end
     local av = Instance.new("ImageLabel")
     av.Size = UDim2.new(1,-4,1,-4)
@@ -2224,7 +2610,6 @@ local function CreatePlayerCard(plr)
     pcall(function()
         av.Image = Players:GetUserThumbnailAsync(plr.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
     end)
-    -- Name
     local dn = Instance.new("TextLabel")
     dn.Size = UDim2.new(1,-60,0,16)
     dn.Position = UDim2.new(0,55,0,8)
@@ -2268,9 +2653,7 @@ local function RemovePlayerCard(plr)
     end
 end
 
-for _, p in ipairs(Players:GetPlayers()) do
-    CreatePlayerCard(p)
-end
+for _, p in ipairs(Players:GetPlayers()) do CreatePlayerCard(p) end
 
 Players.PlayerAdded:Connect(function(p)
     task.wait(1)
@@ -2283,7 +2666,6 @@ Players.PlayerRemoving:Connect(function(p)
     SrvCount.Text = "Players: "..(#Players:GetPlayers() - 1).."/"..Players.MaxPlayers
 end)
 
--- Update server stats
 task.spawn(function()
     while true do
         task.wait(2)
@@ -2293,7 +2675,7 @@ task.spawn(function()
         pcall(function()
             local ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
             if SrvPing and SrvPing.Parent then
-                SrvPing.Text = "Server Ping: "..ping.."ms"
+                SrvPing.Text = "Ping: "..ping.."ms"
             end
         end)
     end
@@ -2323,19 +2705,16 @@ do
         ColorSequenceKeypoint.new(0, Color3.fromRGB(220,30,30)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(0,140,255)),
     })
-    g.Rotation = 135
-    g.Parent = TB
+    g.Rotation = 135 g.Parent = TB
     local s = Instance.new("UIStroke") s.Thickness = 2 s.Parent = TB
     local sg = Instance.new("UIGradient")
     sg.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255,100,100)),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(100,180,255)),
     })
-    sg.Rotation = 135
-    sg.Parent = s
+    sg.Rotation = 135 sg.Parent = s
 end
 
--- ========== OPEN/CLOSE ==========
 local function SetOpen(v)
     UIOpen = v
     if v then
@@ -2400,7 +2779,7 @@ UserInputService.InputChanged:Connect(function(inp)
     end
 end)
 
--- ========== ANIMATED THEME LIGHTING (Background pulse) ==========
+-- ========== ANIMATED STROKE ==========
 task.spawn(function()
     while Panel.Parent do
         local stroke = Panel:FindFirstChildOfClass("UIStroke")
@@ -2417,9 +2796,9 @@ end)
 
 -- ========== LOADING PROGRESS ==========
 task.spawn(function()
-    local dur = 3
-    local steps = 40
-    local statuses = {"Loading modules...","Calibrating aim core...","Setting up ESP...","Ready!"}
+    local dur = 3.5
+    local steps = 50
+    local statuses = {"Initializing system...","Loading aim core...","Setting up ESP...","Calibrating modules...","Ready!"}
     for i = 1, steps do
         local p = i / steps
         TweenService:Create(LProgFill, TweenInfo.new(dur/steps, Enum.EasingStyle.Linear), {Size = UDim2.new(p, 0, 1, 0)}):Play()
@@ -2427,16 +2806,16 @@ task.spawn(function()
         task.wait(dur/steps)
     end
     LStatus.Text = "Complete!"
-    task.wait(0.25)
-    TweenService:Create(LBG, TweenInfo.new(0.6), {BackgroundTransparency = 1}):Play()
+    task.wait(0.3)
+    TweenService:Create(LBG, TweenInfo.new(0.7), {BackgroundTransparency = 1}):Play()
     for _, v in ipairs(LBG:GetDescendants()) do
         pcall(function()
-            if v:IsA("TextLabel") then TweenService:Create(v, TweenInfo.new(0.4), {TextTransparency = 1}):Play() end
-            if v:IsA("Frame") then TweenService:Create(v, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play() end
-            if v:IsA("UIStroke") then TweenService:Create(v, TweenInfo.new(0.4), {Transparency = 1}):Play() end
+            if v:IsA("TextLabel") then TweenService:Create(v, TweenInfo.new(0.5), {TextTransparency = 1}):Play() end
+            if v:IsA("Frame") then TweenService:Create(v, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play() end
+            if v:IsA("UIStroke") then TweenService:Create(v, TweenInfo.new(0.5), {Transparency = 1}):Play() end
         end)
     end
-    task.wait(0.7)
+    task.wait(0.8)
     LGui:Destroy()
     ShowNotice("Universal Aim Core", "Tap the U circle to open!", Color3.fromRGB(0,200,255), 4)
 end)
